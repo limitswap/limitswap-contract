@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin \"./contracts/*.sol\" ./build/merge"
+  }
+}
