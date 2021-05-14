@@ -97,7 +97,7 @@ contract LimitswapRouter {
         // refund dust eth, if any
         if (remainedETH > 0) TransferHelper.safeTransferETH(msg.sender, remainedETH);
     }
-
+//update 2021.5.14:  line 113 tokenA -> tokenB
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -110,7 +110,7 @@ contract LimitswapRouter {
         uint256 balanceB = IERC20(tokenB).balanceOf(address(this));
         ILimitswapPair(pair).burn(address(this));
         amountA = IERC20(tokenA).balanceOf(address(this)).sub(balanceA);
-        amountB = IERC20(tokenA).balanceOf(address(this)).sub(balanceB);
+        amountB = IERC20(tokenB).balanceOf(address(this)).sub(balanceB);
         if (tokenA == WETH) {
             IWETH(WETH).withdraw(amountA);
             TransferHelper.safeTransferETH(msg.sender, amountA);
@@ -223,9 +223,10 @@ contract LimitswapRouter {
         tick = int24(record);
         isSellShare = (record & (1 << 24)) > 0 ? true : false;
     }
-    
-    
+
+
     function putLimitOrder (address pair, address tokenIn, uint256 amountIn, int24 tick) external returns(uint256 share) {
+        require(ILimitswapPair(pair).token0 == tokenIn || ILimitswapPair(pair).token1 == tokenIn, 'TOKENERROR');
         TransferHelper.safeTransferFrom(
             tokenIn, msg.sender, pair, amountIn
         );
@@ -235,7 +236,7 @@ contract LimitswapRouter {
         delete sender;
         limitOrders[msg.sender].pushFront(packRecord(pair, tick, isSellShare));
     }
-    
+
     function cancelLimitOrder (address pair, int24 tick, uint256 share, bool isSellShare) external returns(uint256 token0Out, uint256 token1Out) {
         uint256 totalUserShare;
         if (isSellShare) {
@@ -251,6 +252,17 @@ contract LimitswapRouter {
             limitOrders[msg.sender].remove(packRecord(pair, tick, isSellShare));
         }
     }
+//add: 2021.5.13
+    function putLimitOrderETH (address pair, int24 tick) external payable returns (uint256 share) {
+        require(ILimitswapPair(pair).token0 == WETH || ILimitswapPair(pair).token1 == WETH, 'TOKENERROR');
+        IWETH(WETH).deposit{value: msg.value}();
+        assert(IWETH(WETH).transfer(pair, msg.value));
+        bool isSellShare = WETH == ILimitswapPair(pair).token0()? true : false;
+        sender = msg.sender;
+        share = ILimitswapPair(pair).putLimitOrder(tick, msg.value, isSellShare);
+        delete sender;
+        limitOrders[msg.sender].pushFront(packRecord(pair, tick, isSellShare));
+    }
 
     function getLimitOrdersRaw(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records){
         records = new uint[](limit);
@@ -264,10 +276,12 @@ contract LimitswapRouter {
             if(toContinue) records[i] = cursor;
         }
     }
-
-    function getLimitOrders(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records, uint256[] memory positions){
+//update 2021.5.14: positions(token0Out+token1Out) -> token0Out, token1Out
+    function getLimitOrders(address user, uint256 limit, uint256 offset) public view
+        returns(uint256[] memory records, uint256[] memory token0Out, uint256[] memory token1Out){
         records = getLimitOrdersRaw(user, limit, offset);
-        positions = new uint256[](limit);
+        token0Out = new uint256[](limit);
+        token1Out = new uint256[](limit);
         uint256 position;
         for (uint i; i < limit; i++){
             if (records[i] > 0) {
@@ -277,8 +291,8 @@ contract LimitswapRouter {
                 } else {
                     position = ILimitswapPair(pair).buyShare(user, tick);
                 }
-                (uint256 token0Out, uint256 token1Out) = ILimitswapPair(pair).getLimitTokens(tick, position, isSellShare);
-                positions[i] = (token0Out<<128) + (token1Out&uint128(-1));
+                (token0Out[i], token1Out[i]) = ILimitswapPair(pair).getLimitTokens(tick, position, isSellShare);
+                //positions[i] = (token0Out<<128) + (token1Out&uint128(-1));
             }
         }
     }
@@ -298,7 +312,7 @@ contract LimitswapRouter {
         }
     }
 
-    function getPairInfo (address tokenA, address tokenB) public view 
+    function getPairInfo (address tokenA, address tokenB) public view
         returns(int24 currentTick, uint160 currentSqrtPriceX96, address pair, uint256 reserve0,
         uint256 reserve1, uint256 totalLimit0, uint256 totalLimit1) {
         (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
@@ -311,8 +325,8 @@ contract LimitswapRouter {
             (totalLimit0, totalLimit1) = ILimitswapPair(pair).getTotalLimit();
         }
     }
-    
-    
-    
+
+
+
 
 }
