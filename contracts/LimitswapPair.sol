@@ -32,7 +32,7 @@ abstract contract LimitSwapERC20 is LimitswapStorage{
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    mapping(address => uint256) public writeOffReward0PerTokenX96; 
+    mapping(address => uint256) public writeOffReward0PerTokenX96;
     mapping(address => uint256) public writeOffReward1PerTokenX96;
 
     uint256 public reward0PerTokenX96;
@@ -67,7 +67,7 @@ abstract contract LimitSwapERC20 is LimitswapStorage{
         } else {
             TransferHelper.safeTransfer(token0, _feeCollector, reward0);
             TransferHelper.safeTransfer(token1, _feeCollector, reward1);
-        }  
+        }
     }
 
     function claimableReward (address from, uint256 share) public view returns(uint256 reward0, uint256 reward1) {
@@ -75,7 +75,7 @@ abstract contract LimitSwapERC20 is LimitswapStorage{
         reward0 = FullMath.mulDiv(share, reward0PerTokenX96.sub(writeOffReward0PerTokenX96[from]), 1<<96);
         reward1 = FullMath.mulDiv(share, reward0PerTokenX96.sub(writeOffReward0PerTokenX96[from]), 1<<96);
     }
-    
+
 
     function _mint(address to, uint256 value) internal {
         totalSupply = totalSupply.add(value);
@@ -129,10 +129,10 @@ abstract contract LimitSwapERC20 is LimitswapStorage{
 
 contract LimitswapPair is LimitSwapERC20{
     using SafeMath for uint256;
-    using SafeCast for uint256; 
+    using SafeCast for uint256;
     using TickBitmap for mapping(int16 => uint256);
 
-    address public immutable tradeCore; 
+    address public immutable tradeCore;
     uint256 public lastBalance0;
     uint256 public lastBalance1;
 
@@ -142,7 +142,7 @@ contract LimitswapPair is LimitSwapERC20{
         token1 = _token1;
         unlocked = true;
     }
-    
+
 
     constructor(address _tradeCore) {
         tradeCore = _tradeCore;
@@ -196,7 +196,7 @@ contract LimitswapPair is LimitSwapERC20{
         amount1 = amount0ToAmount1(amount0, currentSqrtPriceX96);
         if (reserve1() == amount1) amount1 --; //always keep at least 1 to maintain liquidity
     }
-    
+
 
     function reserve0() public view returns (uint256){
         return FullMath.mulDivRoundingUp(liquidity, 1<<96, currentSqrtPriceX96);
@@ -213,7 +213,7 @@ contract LimitswapPair is LimitSwapERC20{
         totalLimit0 = totalLimit >> 128;
         totalLimit1 = uint128(totalLimit);
     }
-    
+
 
     // this low-level function should be called from a contract which performs important safety checks
     function mint(address to) lock external returns (uint256 share) {
@@ -240,7 +240,7 @@ contract LimitswapPair is LimitSwapERC20{
             _reserve0 = reserve0();
             liquidity = FullMath.mulDiv(_reserve0.add(amount0In), currentSqrtPriceX96, 1<<96);
         }
-        if (totalSupply == 0){ 
+        if (totalSupply == 0){
             share = FullMath.mulDiv(amount0In, currentSqrtPriceX96, 1<<96);
         } else {
             share = FullMath.mulDiv(amount0In, totalSupply, _reserve0);
@@ -285,13 +285,13 @@ contract LimitswapPair is LimitSwapERC20{
         else if (TickMath.getBit(tickExploited[buyside][word], posInWord)) return true;
         else return false;
     }
-    
+
     function updateDeep(int24 tick, tickDeep memory tickInfo, uint160 sqrtPriceX96, int256 newDeep0, int256 newDeep1) private {
         // bytes4(keccak256(bytes('updateDeepGate(int24,uint128,uint128,uint128,uint128,uint160,int256,int256)')));
         (bool success,) = tradeCore.delegatecall(abi.encodeWithSelector(0xf46c855e,
              tick, tickInfo.buy, tickInfo.bought, tickInfo.sell, tickInfo.sold, sqrtPriceX96, newDeep0, newDeep1));
         require(success);
-    } 
+    }
 
     function transferTokens (address to, uint256 token0Out, uint256 token1Out, bool feeOn) internal returns(uint256 fee0, uint256 fee1){
         if (feeOn) {
@@ -330,7 +330,7 @@ contract LimitswapPair is LimitSwapERC20{
         //assume that the tick is unexploited
         //must be called after unexploiting tick
         UserPosition memory _position = userPosition[isSellShare?1:0][user][tick];
-        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick); 
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         if (_position.tokenOriginalInput > 0) {
             if (!isSellShare) {  //!zeroForToken1, buy -> token1, bought -> token0
                 uint256 amountOut = amount1ToAmount0(_position.tokenOriginalInput, sqrtPriceX96);
@@ -351,7 +351,7 @@ event Debug(uint256);
         require(currentSqrtPriceX96 > 0);
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         updateDeep(tick, Tick[tick], sqrtPriceX96, 0, 0);
-        //check input 
+        //check input
         amount.toUint128();//prevent overflow
         if (zeroForToken1) {
             //token0 as input -> sell deep
@@ -392,11 +392,11 @@ event Debug(uint256);
                     amount = amount.sub(deepBurned);
                     if (amount > 0) amount --; //rounding down
                     autoSwaped = autoSwaped.add(deepBurned); //in token1
-                } 
+                }
                 //open limit sell deep at tick with amount
                 tickInfo.sell += amount.toUint128();
                 //update deep, limit0 up, limit1 down
-                updateDeep(tick, tickInfo, sqrtPriceX96, amount.toInt256(), -deepBurned.toInt256());     
+                updateDeep(tick, tickInfo, sqrtPriceX96, amount.toInt256(), -deepBurned.toInt256());
             } else {
                 //new buy deep with amount1 = amount
                 //first try to take limit sell order at tick
@@ -431,7 +431,8 @@ event Debug(uint256);
             tickPosition[zeroForToken1?1:0][tick].totalShare=tickPosition[zeroForToken1?1:0][tick].totalShare.add(share);
             if (tickPosition[zeroForToken1?1:0][tick].clearanceCount > userPosition[zeroForToken1?1:0][sender][tick].lastEntry){
                 //user share has been cleared
-                claimDealtLimitPosition(sender, tick, zeroForToken1, sender);
+                //transfer to msg.sender for further process
+                claimDealtLimitPosition(sender, tick, zeroForToken1, msg.sender);
                 delete userPosition[zeroForToken1?1:0][sender][tick];
             }
             //add share to user position
@@ -446,7 +447,8 @@ event Debug(uint256);
             uint256 token0Out = zeroForToken1 ? 0 : autoSwaped;
             uint256 token1Out = zeroForToken1 ? autoSwaped : 0;
             //transfer asset
-            (uint256 fee0, uint256 fee1) = transferTokens(sender, token0Out, token1Out, true);
+            //transfer to msg.sender for further process
+            (uint256 fee0, uint256 fee1) = transferTokens(msg.sender, token0Out, token1Out, true);
             //distribute fee0, fee1
             _reward(fee0, fee1);
             //produce log
@@ -474,7 +476,7 @@ event Debug(uint256);
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         //handle with exploiting
         updateDeep(tick, Tick[tick], sqrtPriceX96, 0, 0);
-        tickDeep memory tickInfo = Tick[tick]; 
+        tickDeep memory tickInfo = Tick[tick];
         address sender = msg.sender;
         uint256 size;
         assembly { size := extcodesize(sender) }
@@ -508,7 +510,8 @@ event Debug(uint256);
             token0Out = token0Out.sub(token1Out.mul(3).div(100));
         }
         //no fee will be charged to cancel limit orders
-        transferTokens(sender, token0Out, token1Out, false);
+        //transfer to msg.sender for further process
+        transferTokens(msg.sender, token0Out, token1Out, false);
         //produce log
         emit CancelLimit(sender,
                 tick,
@@ -546,7 +549,7 @@ event Debug(uint256);
         if (!isExploited(tick, 0)) token0Deep =  Tick[tick].sell;
         if (!isExploited(tick, 1)) token1Deep =  Tick[tick].buy;
     }
-            
+
 
     function swap(uint256 amountIn, bool zeroForToken0, address to) lock external returns (uint256 amountOut, uint160 toSqrtPriceX96){
         require(currentSqrtPriceX96 > 0);
@@ -589,11 +592,11 @@ event Debug(uint256);
         if(amount0 > 0) {
             require(!ILimitswapGate(gate).tokenBlockedFromFlashLoan(token0));
             TransferHelper.safeTransfer(token0, recipient, amount0);
-        } 
+        }
         if(amount1 > 0) {
             require(!ILimitswapGate(gate).tokenBlockedFromFlashLoan(token1));
             TransferHelper.safeTransfer(token1, recipient, amount1);
-        } 
+        }
 
         ILimitswapFlashLoanCallback(msg.sender).flashLoanCallback(fee0, fee1, data);
 
@@ -609,7 +612,7 @@ event Debug(uint256);
         lastBalance0 = balance0();
         lastBalance1 = balance1();
     }
-    
+
     function estOutput(uint256 amountIn, bool zeroForToken0) public view returns (uint256, uint256, uint160){
         (bool success, bytes memory data) = address(this).staticcall(
             abi.encodeWithSelector(
@@ -625,7 +628,7 @@ event Debug(uint256);
                 default { return(add(data, 32), returndatasize()) }
         }
     }
-    
+
     fallback () external {
         require(msg.sender == address(this));
 

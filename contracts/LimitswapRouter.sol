@@ -104,13 +104,22 @@ contract LimitswapRouter {
         uint256 share,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256 amountA, uint256 amountB) {
+        (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         address pair = ILimitswapFactory(factory).getPair(tokenA, tokenB);
         TransferHelper.safeTransferFrom(pair, msg.sender, pair, share);
         uint256 balanceA = IERC20(tokenA).balanceOf(address(this));
         uint256 balanceB = IERC20(tokenB).balanceOf(address(this));
         ILimitswapPair(pair).burn(address(this));
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
         amountA = IERC20(tokenA).balanceOf(address(this)).sub(balanceA);
         amountB = IERC20(tokenB).balanceOf(address(this)).sub(balanceB);
+    }
+
+    function transferExtraTokens(address tokenA, address tokenB, uint256 balanceA, uint256 balanceB) private {
+        //without checking token order
+        //must make sure tokenA < tokenB before calling
+        uint256 amountA = IERC20(tokenA).balanceOf(address(this)).sub(balanceA);
+        uint256 amountB = IERC20(tokenB).balanceOf(address(this)).sub(balanceB);
         if (tokenA == WETH) {
             IWETH(WETH).withdraw(amountA);
             TransferHelper.safeTransferETH(msg.sender, amountA);
@@ -226,7 +235,11 @@ contract LimitswapRouter {
 
 
     function putLimitOrder (address pair, address tokenIn, uint256 amountIn, int24 tick) external returns(uint256 share) {
-        require(ILimitswapPair(pair).token0() == tokenIn || ILimitswapPair(pair).token1() == tokenIn, 'TOKENERROR');
+        address tokenA = ILimitswapPair(pair).token0();
+        address tokenB = ILimitswapPair(pair).token1();
+        require(tokenA == tokenIn || tokenB == tokenIn, 'TOKENERROR');
+        uint256 balanceA = IERC20(tokenA).balanceOf(address(this));
+        uint256 balanceB = IERC20(tokenB).balanceOf(address(this));
         TransferHelper.safeTransferFrom(
             tokenIn, msg.sender, pair, amountIn
         );
@@ -235,9 +248,14 @@ contract LimitswapRouter {
         share = ILimitswapPair(pair).putLimitOrder(tick, amountIn, isSellShare);
         delete sender;
         limitOrders[msg.sender].pushFront(packRecord(pair, tick, isSellShare));
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
     }
 
     function cancelLimitOrder (address pair, int24 tick, uint256 share, bool isSellShare) external returns(uint256 token0Out, uint256 token1Out) {
+        address tokenA = ILimitswapPair(pair).token0();
+        address tokenB = ILimitswapPair(pair).token1();
+        uint256 balanceA = IERC20(tokenA).balanceOf(address(this));
+        uint256 balanceB = IERC20(tokenB).balanceOf(address(this));
         uint256 totalUserShare;
         if (isSellShare) {
             totalUserShare = ILimitswapPair(pair).sellShare(msg.sender, tick);
@@ -251,10 +269,15 @@ contract LimitswapRouter {
         if(share == totalUserShare){
             limitOrders[msg.sender].remove(packRecord(pair, tick, isSellShare));
         }
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
     }
 //add: 2021.5.13
     function putLimitOrderETH (address pair, int24 tick) external payable returns (uint256 share) {
-        require(ILimitswapPair(pair).token0() == WETH || ILimitswapPair(pair).token1() == WETH, 'TOKENERROR');
+        address tokenA = ILimitswapPair(pair).token0();
+        address tokenB = ILimitswapPair(pair).token1();
+        require(tokenA == WETH || tokenB == WETH, 'TOKENERROR');
+        uint256 balanceA = IERC20(tokenA).balanceOf(address(this));
+        uint256 balanceB = IERC20(tokenB).balanceOf(address(this));
         IWETH(WETH).deposit{value: msg.value}();
         assert(IWETH(WETH).transfer(pair, msg.value));
         bool isSellShare = WETH == ILimitswapPair(pair).token0()? true : false;
@@ -262,6 +285,7 @@ contract LimitswapRouter {
         share = ILimitswapPair(pair).putLimitOrder(tick, msg.value, isSellShare);
         delete sender;
         limitOrders[msg.sender].pushFront(packRecord(pair, tick, isSellShare));
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
     }
 
     function getLimitOrdersRaw(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records){
