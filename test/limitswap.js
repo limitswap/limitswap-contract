@@ -6,7 +6,8 @@ const TestCoinB = artifacts.require("testCoinB");
 const LimitswapRouter = artifacts.require("LimitswapRouter");
 const WETH = artifacts.require("WETH");
 const FlashBorrower = artifacts.require("flashBorrower");
-
+const LimitswapMine = artifacts.require("LimitswapMine");
+const LimitswapToken = artifacts.require("LimitswapToken");
 
 
 contract('LimitswapPair', (accounts) => {
@@ -25,7 +26,7 @@ contract('LimitswapPair', (accounts) => {
         console.log(a);
         limitSwap = await LimitswapPair.at(a);
       });
-    
+
     //const limitSwap = await LimitswapPair.deployed();
     it('should act as normal CFMM without limit order', async () =>{
         const core = await LimitswapTradeCore.deployed();
@@ -64,8 +65,8 @@ contract('LimitswapPair', (accounts) => {
         console.log(' liquidity', web3.utils.fromWei(await limitSwap.liquidity.call()));
         console.log(' reserve0', web3.utils.fromWei(await limitSwap.reserve0.call()));
         //price tick exploited on buyside = 1 from ^74721 -> ^76012
-        assert.equal(await limitSwap.isExploited.call(76000, 1), true, "Exploited error"); 
-        assert.equal(await limitSwap.isExploited.call(74000, 1), false, "Exploited error"); 
+        assert.equal(await limitSwap.isExploited.call(76000, 1), true, "Exploited error");
+        assert.equal(await limitSwap.isExploited.call(74000, 1), false, "Exploited error");
         console.log('accounts[0]: swap 10000 B');
         var balance0A0 = await testCoinA.balanceOf.call(accounts[0]);
         //console.log(' output for 10000 B',web3.utils.fromWei((await limitSwap.estOutput.call(web3.utils.toWei('10000'), true))[0]));
@@ -116,8 +117,8 @@ contract('LimitswapPair', (accounts) => {
         console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
         res = await limitSwap.getLimitTokens.call( web3.utils.toBN('76000'), accounts[2], sellShare, true);
         console.log(' accounts[2] 76000 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-        assert.equal(await limitSwap.isExploited.call(76000, 0), true, "Exploited error"); 
-        assert.equal(await limitSwap.isExploited.call(76000, 1), false, "Exploited error"); 
+        assert.equal(await limitSwap.isExploited.call(76000, 0), true, "Exploited error");
+        assert.equal(await limitSwap.isExploited.call(76000, 1), false, "Exploited error");
         console.log('accounts[0]: swap 23 A');
         await testCoinA.mint(limitSwap.address, web3.utils.toBN(web3.utils.toWei('23')), { from: accounts[0] });
         await limitSwap.swap(web3.utils.toBN(web3.utils.toWei('23')),false, accounts[0], { from: accounts[0] });
@@ -133,7 +134,7 @@ contract('LimitswapPair', (accounts) => {
         console.log(' accounts[3] 76000 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
         res = await limitSwap.getLimitTokens.call( web3.utils.toBN('76000'), accounts[2], sellShare, true);
         console.log(' accounts[2] 76000 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-        
+
         res = await limitSwap.getDeep.call( web3.utils.toBN('76000'));
         console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
 
@@ -169,8 +170,8 @@ contract('LimitswapPair', (accounts) => {
         await testCoinA.mint(limitSwap.address, web3.utils.toBN(web3.utils.toWei('1')), { from: accounts[0] });
         //await limitSwap.swap(web3.utils.toBN(web3.utils.toWei('1')),false, accounts[0], { from: accounts[0] });
         //console.log(' expect output for 1 A',web3.utils.fromWei((await limitSwap.estOutput.call(web3.utils.toWei('1'), false))[0]));
-        assert.equal(await limitSwap.isExploited.call(76001, 0), false, "Exploited error"); 
-        assert.equal(await limitSwap.isExploited.call(76001, 1), false, "Exploited error"); 
+        assert.equal(await limitSwap.isExploited.call(76001, 0), false, "Exploited error");
+        assert.equal(await limitSwap.isExploited.call(76001, 1), false, "Exploited error");
         console.log(' tick', (await limitSwap.currentTick.call()).toString());//76001
         console.log('accounts[2]: add and remove buy limit 100 B at tick -12301');
         balance0B0 = await testCoinB.balanceOf.call(accounts[2]);
@@ -209,7 +210,7 @@ contract('LimitswapPair', (accounts) => {
         console.log(' totalLimit0', web3.utils.fromWei((await limitSwap.getTotalLimit.call())[0]).toString());
         console.log(' totalLimit1', web3.utils.fromWei((await limitSwap.getTotalLimit.call())[1]).toString());
         //console.log(' expect output for 140 A',web3.utils.fromWei((await limitSwap.estOutput.call(web3.utils.toWei('140'), false))[0]));
-        assert.equal(await limitSwap.isExploited.call(69715, 1), false, "Exploited error"); 
+        assert.equal(await limitSwap.isExploited.call(69715, 1), false, "Exploited error");
         console.log('accounts[0]: swap 140 A');
         var balance0B0 = await testCoinB.balanceOf.call(accounts[0]);
         await testCoinA.mint(limitSwap.address, web3.utils.toBN(web3.utils.toWei('140')), { from: accounts[0] });
@@ -218,7 +219,7 @@ contract('LimitswapPair', (accounts) => {
         console.log(' totalLimit1', web3.utils.fromWei((await limitSwap.getTotalLimit.call())[1]).toString());
         var balance0B1 = await testCoinB.balanceOf.call(accounts[0]);
         console.log(' accounts[0] receive B:', (web3.utils.fromWei(balance0B1.sub(balance0B0))).toString());
-        //assert.equal(await limitSwap.isExploited.call(69715, 1), true, "Exploited error"); 
+        //assert.equal(await limitSwap.isExploited.call(69715, 1), true, "Exploited error");
         res = await limitSwap.getLimitTokens.call( web3.utils.toBN('69715'), accounts[2], buyShare, false);
         console.log(' reserve0', web3.utils.fromWei(await limitSwap.reserve0.call()));
         console.log(' reserve1', web3.utils.fromWei(await limitSwap.reserve1.call()));
@@ -228,7 +229,7 @@ contract('LimitswapPair', (accounts) => {
         console.log(' expect output for 10000 B',web3.utils.fromWei((await limitSwap.estOutput.call(web3.utils.toWei('10000'), true))[0]));
         console.log(' expect output for 1 A',web3.utils.fromWei((await limitSwap.estOutput.call(web3.utils.toWei('1'), false))[0]));
         console.log(' expect output for 10 A',web3.utils.fromWei((await limitSwap.estOutput.call(web3.utils.toWei('10'), false))[0]));//4629
-        
+
         await testCoinA.mint(limitSwap.address, web3.utils.toBN(web3.utils.toWei('300')), { from: accounts[0] });
         console.log(' est gas for swap 200 A', await limitSwap.swap.estimateGas(web3.utils.toBN(web3.utils.toWei('200')),false, accounts[0], { from: accounts[0] }));
         //console.log(' est gas for swap 300 A', await limitSwap.swap.estimateGas(web3.utils.toBN(web3.utils.toWei('300')),false, accounts[0], { from: accounts[0] }));
@@ -369,5 +370,27 @@ contract('LimitswapRouter', (accounts) => {
         var balance0B = await testCoinB.balanceOf.call(accounts[0]);
         assert.isAbove(parseFloat(web3.utils.fromWei(balance0A)), 0);
         assert.isAbove(parseFloat(web3.utils.fromWei(balance0B)), 0);
+    });
+});
+
+contract('LimitswapMine', (accounts) => {
+    it('should be set by owner', async () =>{
+        const miner = await LimitswapMine.deployed();
+        const token = await LimitswapToken.deployed();
+        await token.transferOwnership(miner.address, {from: accounts[0]});
+        const testCoinA = await TestCoinA.deployed();
+        await miner.add('100', testCoinA.address, true, {from: accounts[0]});
+    });
+    it('should generate tokens by mining', async () =>{
+        const miner = await LimitswapMine.deployed();
+        const token = await LimitswapToken.deployed();
+        const testCoinA = await TestCoinA.deployed();
+        await testCoinA.mint(accounts[1], web3.utils.toWei('100'), {from: accounts[1]});
+        await testCoinA.approve(miner.address, web3.utils.toWei('99999999999'), {from: accounts[1]});
+        console.log('accounts[1] mine:');
+        await miner.deposit('0', web3.utils.toWei('1'), {from: accounts[1]});
+        console.log(' pending: ', web3.utils.fromWei(await miner.pendingAmount.call('0', accounts[1])), ' @ ', await web3.eth.getBlockNumber());
+        await testCoinA.mint(accounts[1], web3.utils.toWei('0'), {from: accounts[1]});
+        console.log(' pending: ', web3.utils.fromWei(await miner.pendingAmount.call('0', accounts[1])), ' @ ', await web3.eth.getBlockNumber());
     });
 });
