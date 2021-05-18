@@ -18,22 +18,18 @@ contract LimitswapStorage {
     mapping (int16 => uint256) [2] tickExploited;
 
     mapping(int24 => tickDeep) Tick;
-    mapping(address => mapping(int24 => uint256)) public buyShare;
-    mapping(address => mapping(int24 => uint256)) public sellShare;
+
+
     //[2]-buyside   0 -> buy deep (Y), 1 -> sell deep (X)
     //buyside = 1:  amountIn in Y, deepBurned in Y
     //buyside = 0:  amountIn in X, deepBurned in X 
     //uint256 = uint128 deep + uint128 deeppriced
     mapping(int8 => uint256) [2] DeepWordHigh;
     mapping(int16 => uint256) [2] DeepWordLow;
-    // mapping(int8 => uint256) [2] DeepWordHighPriced;
-    // mapping(int16 => uint256) [2] DeepWordLowPriced;
 
     
     mapping(int16 => uint256) public tickBitmap;
 
-    //mapping(address => mapping(int16 => uint256)) public buyShareWordMark;
-    //mapping(address => mapping(int16 => uint256)) public sellShareWordMark;
 
     address public token0; //token X
     address public token1; //token Y
@@ -67,4 +63,24 @@ contract LimitswapStorage {
         uint256 limitDeepPriced;
         bool buyside;
     }
+
+    struct TickPosition {
+        uint256 totalShare;
+        uint256 dealtPerShareX96;
+        uint256 clearanceCount;
+    }
+
+    struct UserPosition {
+        uint256 userShare;
+        uint256 tokenOutputWriteOff;
+        uint256 tokenOriginalInput;
+        uint256 lastEntry;
+    }
+    //0-buy 1-sell
+    mapping(address => mapping(int24 => UserPosition)) [2] userPosition;
+    //0-buy 1-sell
+    mapping(int24 => TickPosition) [2] tickPosition;
+
+
+    
 }

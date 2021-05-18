@@ -28,33 +28,28 @@ contract LimitswapTradeCore is LimitswapStorage{
         amount0 = FullMath.mulDiv(FullMath.mulDiv(amount1, 1<<96, sqrtPriceX96),1<<96,sqrtPriceX96);
     }
 
-    function getLimitTokensCode (int24 tick, uint256 share, bool isSellShare) public view returns(uint256 token0Out, uint256 token1Out) {
-        tickDeep memory tickInfo = Tick[tick];  
+    function getLimitTokensCode (int24 tick, address user, uint256 share, bool isSellShare) public view returns(uint256 token0Out, uint256 token1Out) {
+        UserPosition memory _position = userPosition[isSellShare?1:0][user][tick];
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick); 
-        if (isSellShare){
-            //share in token1
-            uint256 totalSellShare = amount0ToAmount1(tickInfo.sell, sqrtPriceX96).add(tickInfo.sold);
-            share = Math.min(share, totalSellShare);
-            if (totalSellShare == 0) return (0,0);
-            if (isExploited(tick, 0)) {
-                tickInfo.sold += amount0ToAmount1(tickInfo.sell, sqrtPriceX96).toUint128();
-                tickInfo.sell = 0;
-            }
-            token0Out = FullMath.mulDiv(share, tickInfo.sell, totalSellShare);
-            token1Out = FullMath.mulDiv(share, tickInfo.sold, totalSellShare);
+        uint256 amountOut;
+        uint256 amountIn;
+        if (isExploited(tick, isSellShare?0:1) || tickPosition[isSellShare?1:0][tick].clearanceCount > _position.lastEntry) { 
+            //has been totally sold
+            amountOut = isSellShare ? 
+                amount0ToAmount1(_position.tokenOriginalInput, sqrtPriceX96) : 
+                amount1ToAmount0(_position.tokenOriginalInput, sqrtPriceX96);
         } else {
-            //share in token0
-            uint256 totalBuyShare = amount1ToAmount0(tickInfo.buy, sqrtPriceX96).add(tickInfo.bought);
-            share = Math.min(share, totalBuyShare);
-            if (totalBuyShare == 0) return (0,0);
-            if (isExploited(tick, 1)) {
-                tickInfo.bought += amount1ToAmount0(tickInfo.buy, sqrtPriceX96).toUint128();
-                tickInfo.buy = 0;
-            }
-            share = Math.min(share, totalBuyShare);
-            token0Out = FullMath.mulDiv(share, tickInfo.bought, totalBuyShare);
-            token1Out = FullMath.mulDiv(share, tickInfo.buy, totalBuyShare);
+            amountOut = FullMath.mulDiv(_position.userShare, tickPosition[isSellShare?1:0][tick].dealtPerShareX96, 1<<96);
+            amountOut = amountOut > _position.tokenOutputWriteOff ? amountOut.sub(_position.tokenOutputWriteOff) : 0;
+            amountIn = _position.tokenOriginalInput.sub(
+                    isSellShare ? amount1ToAmount0(amountOut, sqrtPriceX96) : amount0ToAmount1(amountOut, sqrtPriceX96)
+                );
         }
+        share = Math.min(share, _position.userShare);
+        if (_position.userShare == 0) return (0, 0);
+        amountIn  = FullMath.mulDiv(share, amountIn,  _position.userShare);
+        amountOut = FullMath.mulDiv(share, amountOut, _position.userShare);
+        (token0Out, token1Out) = isSellShare ? (amountIn, amountOut) : (amountOut, amountIn);
     }
     
     function isExploitedGate (int24 tick, uint buyside) public view returns(bool) {
@@ -481,19 +476,48 @@ contract LimitswapTradeCore is LimitswapStorage{
         updateDeep(tick, tickDeep(buy, bought, sell, sold), sqrtPriceX96, newDeep0, newDeep1);
     }
     
+    function clearTickPosition (int24 tick, uint256 isSellShare) private {
+        tickPosition[isSellShare][tick].totalShare = 0;
+        tickPosition[isSellShare][tick].dealtPerShareX96 = 0;
+        tickPosition[isSellShare][tick].clearanceCount += 1;
+    }
 
-    function updateDeep(int24 tick, tickDeep memory tickInfo, uint160 sqrtPriceX96, int256 newDeep0, int256 newDeep1) private {
+    function dealAtTickPosition (int24 tick, uint256 isSellShare, uint256 dealOutput) private {
+        if (dealOutput > 0) {
+            require(tickPosition[isSellShare][tick].totalShare > 0, 'DEEPERROR');
+            tickPosition[isSellShare][tick].dealtPerShareX96 = tickPosition[isSellShare][tick].dealtPerShareX96.add(
+                FullMath.mulDiv(dealOutput, 1<<96, tickPosition[isSellShare][tick].totalShare)
+                );
+        }
+    }
+    
+
+    function updateDeep(int24 tick, tickDeep memory tickInfo, uint160 sqrtPriceX96, int256 newDeep0, int256 newDeep1) internal {
         (int8 wordHigh,, int16 word,) = TickMath.resolvePos(tick);
         //uint128+uint128 may overflow, check elsewhere
-        if(isExploited(tick, 0)){
+        if (isExploited(tick, 0)){//has been totally bought
+            //set tickInfo
             tickInfo.bought += amount1ToAmount0(tickInfo.buy, sqrtPriceX96).toUint128();
             tickInfo.buy = 0;
+            //set tickPosition
+            clearTickPosition(tick, 0);
+            //unExploitedTick
             unExploitedTick(tick, 0);
         } 
-        if(isExploited(tick, 1)){
+        else if (Tick[tick].bought < tickInfo.bought){
+            dealAtTickPosition(tick, 0, tickInfo.bought - Tick[tick].bought);
+        }
+        if (isExploited(tick, 1)){//has been totally sold
+            //set tickInfo
             tickInfo.sold += amount0ToAmount1(tickInfo.sell, sqrtPriceX96).toUint128();
             tickInfo.sell = 0;
+            //set tickPosition
+            clearTickPosition(tick, 1);
+            //unExploitedTick
             unExploitedTick(tick, 1);
+        }
+        else if (Tick[tick].sold < tickInfo.sold){
+            dealAtTickPosition(tick, 1, tickInfo.sold - Tick[tick].sold);
         }
         Tick[tick] = tickInfo;
         uint buyside;
@@ -504,10 +528,6 @@ contract LimitswapTradeCore is LimitswapStorage{
             buyside = 1;
             DeepWordHigh[buyside][wordHigh] += ((uint256(newDeep1) << 128) + newDeepPriced);
             DeepWordLow[buyside][word] += ((uint256(newDeep1) << 128) + newDeepPriced);
-            // DeepWordHigh[buyside][wordHigh] += uint256(newDeep1);
-            // DeepWordHighPriced[buyside][wordHigh] += newDeepPriced;
-            // DeepWordLow[buyside][word] += uint256(newDeep1);
-            // DeepWordLowPriced[buyside][word] += newDeepPriced;
             totalLimitNew += uint256(newDeep1);
         }
         if (newDeep1 < 0){
@@ -516,10 +536,6 @@ contract LimitswapTradeCore is LimitswapStorage{
             buyside = 1;
             DeepWordHigh[buyside][wordHigh] -= ((uint256(-newDeep1) << 128) + newDeepPriced);
             DeepWordLow[buyside][word] -= ((uint256(-newDeep1) << 128) + newDeepPriced);
-            // DeepWordHigh[buyside][wordHigh] -= uint256(newDeep1);
-            // DeepWordHighPriced[buyside][wordHigh] -= newDeepPriced;
-            // DeepWordLow[buyside][word] -= uint256(newDeep1);
-            // DeepWordLowPriced[buyside][word] -= newDeepPriced;
             totalLimitNew -= uint256(-newDeep1);
         }
         if (newDeep0 > 0){
@@ -527,10 +543,6 @@ contract LimitswapTradeCore is LimitswapStorage{
             buyside = 0;
             DeepWordHigh[buyside][wordHigh] += ((uint256(newDeep0) << 128) + newDeepPriced);
             DeepWordLow[buyside][word] += ((uint256(newDeep0) << 128) + newDeepPriced);
-            // DeepWordHigh[buyside][wordHigh] += uint256(newDeep0);
-            // DeepWordHighPriced[buyside][wordHigh] += newDeepPriced;
-            // DeepWordLow[buyside][word] += uint256(newDeep0);
-            // DeepWordLowPriced[buyside][word] += newDeepPriced;
             totalLimitNew += (uint256(newDeep0)<<128);
         }
         if (newDeep0 < 0){
@@ -538,10 +550,6 @@ contract LimitswapTradeCore is LimitswapStorage{
             buyside = 0;
             DeepWordHigh[buyside][wordHigh] -= ((uint256(-newDeep0) << 128) + newDeepPriced);
             DeepWordLow[buyside][word] -= ((uint256(-newDeep0) << 128) + newDeepPriced);
-            // DeepWordHigh[buyside][wordHigh] += uint256(-newDeep0);
-            // DeepWordHighPriced[buyside][wordHigh] += newDeepPriced;
-            // DeepWordLow[buyside][word] += uint256(-newDeep0);
-            // DeepWordLowPriced[buyside][word] += newDeepPriced;
             totalLimitNew -= (uint256(-newDeep0)<<128);
         }
         if (totalLimitNew != totalLimit) totalLimit = totalLimitNew;

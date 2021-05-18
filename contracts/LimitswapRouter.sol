@@ -226,7 +226,7 @@ contract LimitswapRouter {
 
 
     function putLimitOrder (address pair, address tokenIn, uint256 amountIn, int24 tick) external returns(uint256 share) {
-        require(ILimitswapPair(pair).token0 == tokenIn || ILimitswapPair(pair).token1 == tokenIn, 'TOKENERROR');
+        require(ILimitswapPair(pair).token0() == tokenIn || ILimitswapPair(pair).token1() == tokenIn, 'TOKENERROR');
         TransferHelper.safeTransferFrom(
             tokenIn, msg.sender, pair, amountIn
         );
@@ -244,7 +244,7 @@ contract LimitswapRouter {
         } else {
             totalUserShare = ILimitswapPair(pair).buyShare(msg.sender, tick);
         }
-        require (share <= totalUserShare);
+        require (share <= totalUserShare, 'NOT ENOUGH SHARE');
         sender = msg.sender;
         (token0Out, token1Out) = ILimitswapPair(pair).cancelLimitOrder(tick, share, isSellShare);
         delete sender;
@@ -254,7 +254,7 @@ contract LimitswapRouter {
     }
 //add: 2021.5.13
     function putLimitOrderETH (address pair, int24 tick) external payable returns (uint256 share) {
-        require(ILimitswapPair(pair).token0 == WETH || ILimitswapPair(pair).token1 == WETH, 'TOKENERROR');
+        require(ILimitswapPair(pair).token0() == WETH || ILimitswapPair(pair).token1() == WETH, 'TOKENERROR');
         IWETH(WETH).deposit{value: msg.value}();
         assert(IWETH(WETH).transfer(pair, msg.value));
         bool isSellShare = WETH == ILimitswapPair(pair).token0()? true : false;

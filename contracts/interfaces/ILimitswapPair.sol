@@ -16,8 +16,6 @@ interface ILimitswapPair {
     function cancelLimitOrder(int24 tick, uint256 share, bool isSellShare) external returns (uint256 token0Out, uint256 token1Out);
     function swap(uint256 amountIn, bool zeroForToken0, address to) external returns (uint256 amountOut, uint160 toSqrtPriceX96);
     function initTokenAddress(address, address) external;
-    function sellShareWordMark(address, int16) external view returns (uint256);
-    function buyShareWordMark(address, int16) external view returns (uint256);
     function sellShare(address, int24) external view returns (uint256);
     function buyShare(address, int24) external view returns (uint256);
     function getLimitTokens (int24 tick, uint256 share, bool isSellShare) external view returns(uint256 token0Out, uint256 token1Out);

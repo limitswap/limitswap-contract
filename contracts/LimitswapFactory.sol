@@ -60,7 +60,12 @@ abstract contract LimitswapGate is ILimitswapGate, Ownable{
 }
 
 contract LimitswapFactory is LimitswapGate {
-    mapping(address => mapping(address => address)) public getPair;
+    mapping(address => mapping(address => address)) pairInfo;
+
+    function getPair (address tokenA, address tokenB) public view returns(address pair) {
+        pair = tokenA < tokenB ? pairInfo[tokenA][tokenB] : pairInfo[tokenB][tokenA];
+    }
+    
 
     address[] public allPairs;
 
@@ -80,7 +85,7 @@ contract LimitswapFactory is LimitswapGate {
         require(tokenA != tokenB, 'Limitswap: IDENTICAL_ADDRESSES');
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0), 'Limitswap: ZERO_ADDRESS');
-        require(getPair[token0][token1] == address(0), 'Limitswap: PAIR_EXISTS'); // single check is sufficient
+        require(pairInfo[token0][token1] == address(0), 'Limitswap: PAIR_EXISTS'); // single check is sufficient
         bytes memory bytecode = type(MinialPair).creationCode;
         bytecode = abi.encodePacked(bytecode, abi.encode(LimitswapPairCode, address(this)));
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
@@ -88,8 +93,8 @@ contract LimitswapFactory is LimitswapGate {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
         ILimitswapPair(pair).initTokenAddress(token0, token1);
-        getPair[token0][token1] = pair;
-        getPair[token1][token0] = pair; // populate mapping in the reverse direction
+        pairInfo[token0][token1] = pair;
+        pairInfo[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);
         emit PairCreated(token0, token1, pair, allPairs.length);
     }
