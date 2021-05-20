@@ -18,7 +18,8 @@ interface ILimitswapPair {
     function initTokenAddress(address, address) external;
     function sellShare(address, int24) external view returns (uint256);
     function buyShare(address, int24) external view returns (uint256);
-    function getLimitTokens (int24 tick, uint256 share, bool isSellShare) external view returns(uint256 token0Out, uint256 token1Out);
+    function getLimitTokens (int24 tick, address user, uint256 share, bool isSellShare) external view returns(uint256 token0Out, uint256 token1Out);
+    function getDeep (int24 tick) external view returns(uint256 token0Deep, uint256 token1Deep);
     function estOutput(uint256 amountIn, bool zeroForToken0) external view returns (uint256, uint256, uint160);
     function currentTick() external view returns(int24 tick);
     function reserve0() external view returns (uint256);

@@ -344,7 +344,7 @@ contract LimitswapPair is LimitSwapERC20{
             delete userPosition[isSellShare?1:0][user][tick];
         }
     }
-event Debug(uint256);
+
     //zeroForToken1 a.k.a buyside
     //buyside is for the taker, buyside = 1 -> add sell deep with token0, vice visa
     function putLimitOrder(int24 tick, uint256 amount, bool zeroForToken1) lock external returns (uint256 share){

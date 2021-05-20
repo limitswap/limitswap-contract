@@ -315,7 +315,7 @@ contract LimitswapRouter {
                 } else {
                     position = ILimitswapPair(pair).buyShare(user, tick);
                 }
-                (token0Out[i], token1Out[i]) = ILimitswapPair(pair).getLimitTokens(tick, position, isSellShare);
+                (token0Out[i], token1Out[i]) = ILimitswapPair(pair).getLimitTokens(tick, user, position, isSellShare);
                 //positions[i] = (token0Out<<128) + (token1Out&uint128(-1));
             }
         }

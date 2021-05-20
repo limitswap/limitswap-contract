@@ -4,14 +4,27 @@
 
 （on Heco chain）
 
+## updates
+
+### update 202005-2
+
+添加了治理代币合约LimitswapToken以及矿池合约LimitswapMine
+
+### update 202005-1
+
+之前tick处未成交-已成交深度简单的用两个uint表示，部分情况下会导致已成交的份额被新入限价挂单稀释。
+
+修改后用userPosition与tickPosition取代了简单的sellShare/buyShare跟踪，已成交的限价份额不可逆。
+
+此外修正了部分bug：工厂合约的getPair自动调整输入token地址的顺序；pair的限价交互把token转移至msg.sender而非sender，以便路由合约解包WETH
 
 
 ## ERC20 interface
 
 - function **name**() public view returns (string memory);
-- function **symbol**() public view eturns (string memory);
-- function **decimals**() public view eturns (uint8);
-- function **totalSupply**() public view eturns (uint256);
+- function **symbol**() public view returns (string memory);
+- function **decimals**() public view returns (uint8);
+- function **totalSupply**() public view returns (uint256);
 - mapping(address => uint256) public **balanceOf**
 - mapping(address => mapping(address => uint256)) public **allowance**;
 - function **approve**(address spender, uint256 value) external;
@@ -94,13 +107,15 @@
 
   isSellShare: 是否是卖单（挂的是token0）
 
-- function **getLimitTokens** (int24 tick, uint256 share, bool isSellShare) public view returns(uint256 token0, uint256 token1);
+- function **getLimitTokens** (int24 tick, address user, uint256 share, bool isSellShare) public view returns(uint256 token0, uint256 token1);
 
   *获取给定价格刻度烧掉一定share可获得的代币*
 
   输入：
 
   tick: 挂单的价格刻度
+
+  user: 持有限价单的用户地址
 
   share: 需要退出的share数量
 
@@ -313,7 +328,7 @@
   }
   ```
 
-- function **getLimitOrders**(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records, uint256[] memory positions);
+- function **getLimitOrders**(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records, uint256[] memory token0Out, uint256[] memory token1Out);
 
   *返回给定用户不为零的限价订单及对应刻度最大可以拿到的token数量*
 
@@ -329,7 +344,9 @@
 
   records：用户限价订单记录，每一条为一个uint256，解析见getLimitOrdersRaw
 
-  positions: 最大可退回的token数量，uint256 = uint128 token0Out + uint128 token1Out
+  token0Out: 可退出的token0数量
+
+  token1Out: 可退出的token1数量
 
 - function **getLPBalance** (address user, uint256 scanLimit, uint256 scanOffset, uint256 resLimit) public view returns(uint256[] memory balances);
 
@@ -365,7 +382,7 @@ LIMITSWAPFACTORY: 0x2D1C5C9E849B7c4a7Fd4375B595972a9277C2551
 
 weth: 0xDf032Bc4B9dC2782Bb09352007D4C57B75160B15
 
-LIMITSWAPROUTER: 
+LIMITSWAPROUTER:
 
 0x0D73Ba4404f19288754E6Fa561a7E286f9C11988
 
@@ -394,4 +411,3 @@ LIMITSWAPROUTER: 0x161E030954E926e0B51fFfE7277B978B36f637e1
 testCoinA: 0x9c34c7A413Cf83dC4bed793E22bf2B1FEb65f1A4
 
 testCoinB: 0xD7a9b24f756d8207aF6976B36DAF9B46eC5662e1
-

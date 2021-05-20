@@ -194,6 +194,10 @@ contract LimitswapMine is Ownable {
         }
     }
 
+    function depositedAmount(uint256 _pid, address _user) public view returns (uint256 amount) {
+        amount = userInfo[_pid][_user].amount;
+    }
+
     // Claim limitswap token.
     function claim(uint256 _pid) public {
         UserInfo storage user = userInfo[_pid][msg.sender];
