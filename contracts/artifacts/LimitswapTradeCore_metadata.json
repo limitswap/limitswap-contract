@@ -54,30 +54,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "",
-						"type": "address"
-					},
-					{
-						"internalType": "int24",
-						"name": "",
-						"type": "int24"
-					}
-				],
-				"name": "buyShare",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "currentSqrtPriceX96",
 				"outputs": [
@@ -96,6 +72,11 @@
 						"internalType": "int24",
 						"name": "tick",
 						"type": "int24"
+					},
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
 					},
 					{
 						"internalType": "uint256",
@@ -177,30 +158,6 @@
 			{
 				"inputs": [],
 				"name": "reserve1",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "",
-						"type": "address"
-					},
-					{
-						"internalType": "int24",
-						"name": "",
-						"type": "int24"
-					}
-				],
-				"name": "sellShare",
 				"outputs": [
 					{
 						"internalType": "uint256",
@@ -422,26 +379,26 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
+			"enabled": true,
 			"runs": 200
 		},
 		"remappings": []
 	},
 	"sources": {
 		"LimitswapStorage.sol": {
-			"keccak256": "0x2787ee261ab157c348a15e2f04a6e043c5cd4348030f2a136ebce0b1dcd455a7",
+			"keccak256": "0xfee09b71a761fa14e83b5a1382f6951b89282ecd371de9229070af3ae91c8476",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://2b91241a7c138dbcdf25b0003dc1fdf73f0984dff525c888a1d493f3d7069e4d",
-				"dweb:/ipfs/QmWCtDBi2oNDugBLdVLFMmSkY6bk2MghqV1pw4ZXMgwQDR"
+				"bzz-raw://5679e61deea0324c48f36271499f7b6ad95066c1a011cdfa97ada1c8c4fdccd1",
+				"dweb:/ipfs/QmZwjJkqMmfzBkth8zXt9ogJBJr5gecqwjWojeMnPgw4aQ"
 			]
 		},
 		"LimitswapTradeCore.sol": {
-			"keccak256": "0x8f49336398f2ccdba90e379bd5961d1f3c7856881377867a2e519ad01d35c3b0",
+			"keccak256": "0xc9a3146ff86baa77faa106fdf724cb5092e8005ad52a897019e844f0b68f4fda",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://c3801d8ea92d504304dc085fc0156e4d3d45026d5093ea4b3fa4537715e5d262",
-				"dweb:/ipfs/QmW6vJCUh5vs4Ei4Nt4sDXo3zhmiLcL2NZzC1iYnz2a4Jh"
+				"bzz-raw://d74941d3c4e11f9d9deb7cc30d0d51155a217c28aced5d9590d4a2268a32448e",
+				"dweb:/ipfs/QmRGTbuW4Mh469QGPojLhTCuqjztRYs2to7KGWZnhKq6UP"
 			]
 		},
 		"interfaces/IERC20.sol": {
@@ -493,11 +450,11 @@
 			]
 		},
 		"libraries/SafeMath.sol": {
-			"keccak256": "0xebb3b36b8d463aa9fb9389226102113525a7a275b5a1da29c535b202cd5d1c5b",
+			"keccak256": "0xe91bcc1a58ddcb9e33d1b5f37b5645d200314fdd4149f275fda4834a87638255",
 			"license": "GPL 2.0",
 			"urls": [
-				"bzz-raw://dad6e09bf474da86fa911cab0899dbb86fab402a7095a74df259962358a4c947",
-				"dweb:/ipfs/QmPNUufUNRm4yjDqx2qQAHCMUNFivdsXHQTHcE1RwLKBhC"
+				"bzz-raw://3211b5134816f0c71f5531a23fa60bb9810273994ae665ba71e1cecb64c3a926",
+				"dweb:/ipfs/QmedhHZFVm73PHN7kGbmmJXoToA8QYcwY5EYQ4zqwLuEkj"
 			]
 		},
 		"libraries/SqrtPriceMath.sol": {

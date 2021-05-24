@@ -73,18 +73,18 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
+			"enabled": true,
 			"runs": 200
 		},
 		"remappings": []
 	},
 	"sources": {
 		"LimitswapFactory.sol": {
-			"keccak256": "0xa4780e690bcc753d63807dd2d4cb7d858b0457e8c40c74b96cc9047487cfad5a",
+			"keccak256": "0x4286fbfba9c289768e6c9503253c110ab82be346339e5136c640e32e817aaf6e",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://376b4303e4cd4a57bb272dc532b05e63508e9909c98730933368243969dbff98",
-				"dweb:/ipfs/QmT5XPRSdqBsnAiYBHjELvr43pwScJm5q3D5nb3zY8ma45"
+				"bzz-raw://2b2224355388414756afdc4d3c287f9acfc42c46f0cc51dcf278ee9a126c00ef",
+				"dweb:/ipfs/QmRiSbawGLMaCyCnQUkSiTaEu322LZmxMwz1VN8k4ZQLAT"
 			]
 		},
 		"interfaces/ILimitswapGate.sol": {
@@ -96,19 +96,27 @@
 			]
 		},
 		"interfaces/ILimitswapPair.sol": {
-			"keccak256": "0x64b15512e6e7c0be3bddd310a2cc3abfd57031ab91d00ce189ab980ed7618c3b",
+			"keccak256": "0xbc8bfe30c218069cddd2093fb5f4103efc2f5195fc6817d579dadde0d4346414",
 			"license": "GPL 2.0",
 			"urls": [
-				"bzz-raw://2e59bdd5218d8688c0440dd8710887c0577f11ad3ede71e89c6e731b29bfc919",
-				"dweb:/ipfs/QmTMzfKnMZgXjthKhWfPTpszt72znp6oswsjmFz6dfVFTc"
+				"bzz-raw://e5454df701af6a6c10cbe359b46959a4f5992bfd8817310d290860ad2a4628f3",
+				"dweb:/ipfs/QmXmK53D99SnrbJYKR3TknikqtySnpJhRC5LVL7cSV1ng3"
+			]
+		},
+		"libraries/Context.sol": {
+			"keccak256": "0xe6d13b9a66f240929712c44bc03db7be9563a327397f178cd8203c0b5ac2a385",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://29c10b583551d0e95eb22274ad7fe2d097f39c9c51adb5eb237d1364902c78e4",
+				"dweb:/ipfs/QmSXZdiyv94RcVgo5xYMs6kafuh9dPQFS6FgdvdvuxXm2M"
 			]
 		},
 		"libraries/Ownable.sol": {
-			"keccak256": "0x9e667230f7ebc3f7bc043d59134096ce588306099e64e62c414ea85c58ff2b0f",
+			"keccak256": "0x2680e4030cefaf8a228919528f805861f8aeba9b05292f718024ff2fb261f375",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://03cd7d525d2e63a1ecedefeb6aa1547c4db42c1bc7f1e18bd1307ddd437aabc0",
-				"dweb:/ipfs/Qmbbzw6cwJeTQoCFKN5vd8BsDfrBgqmFEReDTdHKBWNqdk"
+				"bzz-raw://6a3f6072703b367dfedc9057ab408ed2f70df4992556d38731799245654813fc",
+				"dweb:/ipfs/QmQRknSqXt5m4ZSRpMkWjAGt3uzmvaxjLDdyEpqqWQhZFP"
 			]
 		}
 	},

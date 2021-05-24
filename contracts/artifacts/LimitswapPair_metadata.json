@@ -258,6 +258,30 @@
 			{
 				"inputs": [
 					{
+						"internalType": "uint256",
+						"name": "LPamount",
+						"type": "uint256"
+					}
+				],
+				"name": "LP2Tokens",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "amount0",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount1",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "address",
 						"name": "",
 						"type": "address"
@@ -398,12 +422,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "",
+						"name": "user",
 						"type": "address"
 					},
 					{
 						"internalType": "int24",
-						"name": "",
+						"name": "tick",
 						"type": "int24"
 					}
 				],
@@ -411,7 +435,7 @@
 				"outputs": [
 					{
 						"internalType": "uint256",
-						"name": "",
+						"name": "share",
 						"type": "uint256"
 					}
 				],
@@ -612,6 +636,11 @@
 						"internalType": "int24",
 						"name": "tick",
 						"type": "int24"
+					},
+					{
+						"internalType": "address",
+						"name": "user",
+						"type": "address"
 					},
 					{
 						"internalType": "uint256",
@@ -856,12 +885,12 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "",
+						"name": "user",
 						"type": "address"
 					},
 					{
 						"internalType": "int24",
-						"name": "",
+						"name": "tick",
 						"type": "int24"
 					}
 				],
@@ -869,7 +898,7 @@
 				"outputs": [
 					{
 						"internalType": "uint256",
-						"name": "",
+						"name": "share",
 						"type": "uint256"
 					}
 				],
@@ -1114,19 +1143,19 @@
 	},
 	"sources": {
 		"LimitswapPair.sol": {
-			"keccak256": "0xfb10fed5662f26bbd0086da388ff1499c8173b983e9e66526f66bd75bcbb0a40",
+			"keccak256": "0xf1a23021e0e74b817e64184b49c9d2d1408e5bb763a24a7c4581eff6cfc9f7d6",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://2fe94cb211f8cd797d6597d9ae4eaed2800aac410fc029c6c67a8666dbbe8e36",
-				"dweb:/ipfs/QmX4jxFdkwgiDA27So8xMTB3xScBzxtnmz9Dz9Lg9HEnPm"
+				"bzz-raw://ad69e6b40ea2184be9cb9f5dfb1a51f7ec49b0e1966d152933a52eba209a6097",
+				"dweb:/ipfs/QmPVxWeof9Hrz2ThrbMyszUn3WHsTZeg3WRzxucHz8PEKS"
 			]
 		},
 		"LimitswapStorage.sol": {
-			"keccak256": "0x2787ee261ab157c348a15e2f04a6e043c5cd4348030f2a136ebce0b1dcd455a7",
+			"keccak256": "0xfee09b71a761fa14e83b5a1382f6951b89282ecd371de9229070af3ae91c8476",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://2b91241a7c138dbcdf25b0003dc1fdf73f0984dff525c888a1d493f3d7069e4d",
-				"dweb:/ipfs/QmWCtDBi2oNDugBLdVLFMmSkY6bk2MghqV1pw4ZXMgwQDR"
+				"bzz-raw://5679e61deea0324c48f36271499f7b6ad95066c1a011cdfa97ada1c8c4fdccd1",
+				"dweb:/ipfs/QmZwjJkqMmfzBkth8zXt9ogJBJr5gecqwjWojeMnPgw4aQ"
 			]
 		},
 		"interfaces/IERC20.sol": {
@@ -1154,11 +1183,11 @@
 			]
 		},
 		"interfaces/ILimitswapTradeCore.sol": {
-			"keccak256": "0x63e745257f11dd7cda9cbf4f6feb331533f376a2e2a87d4f46daf706e2444ca9",
+			"keccak256": "0x6c44af7559348e39092bf180dab3c77c72d11bc41b03fc446ab6c2c7e314f9ad",
 			"license": "GPL 2.0",
 			"urls": [
-				"bzz-raw://7e1e925451eab8653d3f7deeafc4b67cd57f5cb043049fed13f94abc2fc28414",
-				"dweb:/ipfs/QmVrVGxSMDs4jQvhzhqGiF1c7PBfAsqH6qTAJbPGvk3g4Z"
+				"bzz-raw://1b507e2c41c9050a9b11e4418d728f69e0750888856683ae3df19414cda76ef5",
+				"dweb:/ipfs/QmcbvSY4DLDSS1xeP7dYgSCRRL5rx1yWxvnz1oVaPpnRBJ"
 			]
 		},
 		"libraries/BitMath.sol": {
@@ -1202,11 +1231,11 @@
 			]
 		},
 		"libraries/SafeMath.sol": {
-			"keccak256": "0xebb3b36b8d463aa9fb9389226102113525a7a275b5a1da29c535b202cd5d1c5b",
+			"keccak256": "0xe91bcc1a58ddcb9e33d1b5f37b5645d200314fdd4149f275fda4834a87638255",
 			"license": "GPL 2.0",
 			"urls": [
-				"bzz-raw://dad6e09bf474da86fa911cab0899dbb86fab402a7095a74df259962358a4c947",
-				"dweb:/ipfs/QmPNUufUNRm4yjDqx2qQAHCMUNFivdsXHQTHcE1RwLKBhC"
+				"bzz-raw://3211b5134816f0c71f5531a23fa60bb9810273994ae665ba71e1cecb64c3a926",
+				"dweb:/ipfs/QmedhHZFVm73PHN7kGbmmJXoToA8QYcwY5EYQ4zqwLuEkj"
 			]
 		},
 		"libraries/SqrtPriceMath.sol": {

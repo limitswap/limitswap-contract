@@ -50,7 +50,6 @@
 			"allowance(address,address)": "dd62ed3e",
 			"approve(address,uint256)": "095ea7b3",
 			"balanceOf(address)": "70a08231",
-			"buyShare(address,int24)": "2a354ad9",
 			"claimableReward(address,uint256)": "6bd97f1d",
 			"currentSqrtPriceX96()": "47fd03d9",
 			"decimals()": "313ce567",
@@ -58,7 +57,6 @@
 			"name()": "06fdde03",
 			"reward0PerTokenX96()": "834d04af",
 			"reward1PerTokenX96()": "3b8a829d",
-			"sellShare(address,int24)": "ef6ae4cc",
 			"symbol()": "95d89b41",
 			"tickBitmap(int16)": "5339c296",
 			"token0()": "0dfe1681",
@@ -192,30 +190,6 @@
 			"inputs": [
 				{
 					"internalType": "address",
-					"name": "",
-					"type": "address"
-				},
-				{
-					"internalType": "int24",
-					"name": "",
-					"type": "int24"
-				}
-			],
-			"name": "buyShare",
-			"outputs": [
-				{
-					"internalType": "uint256",
-					"name": "",
-					"type": "uint256"
-				}
-			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "address",
 					"name": "from",
 					"type": "address"
 				},
@@ -309,30 +283,6 @@
 		{
 			"inputs": [],
 			"name": "reward1PerTokenX96",
-			"outputs": [
-				{
-					"internalType": "uint256",
-					"name": "",
-					"type": "uint256"
-				}
-			],
-			"stateMutability": "view",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "address",
-					"name": "",
-					"type": "address"
-				},
-				{
-					"internalType": "int24",
-					"name": "",
-					"type": "int24"
-				}
-			],
-			"name": "sellShare",
 			"outputs": [
 				{
 					"internalType": "uint256",
