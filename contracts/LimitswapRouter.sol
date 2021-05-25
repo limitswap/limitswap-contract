@@ -110,9 +110,9 @@ contract LimitswapRouter {
         uint256 balanceA = IERC20(tokenA).balanceOf(address(this));
         uint256 balanceB = IERC20(tokenB).balanceOf(address(this));
         ILimitswapPair(pair).burn(address(this));
-        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
         amountA = IERC20(tokenA).balanceOf(address(this)).sub(balanceA);
         amountB = IERC20(tokenB).balanceOf(address(this)).sub(balanceB);
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
     }
 
     function transferExtraTokens(address tokenA, address tokenB, uint256 balanceA, uint256 balanceB) private {
