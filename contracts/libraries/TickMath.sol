@@ -206,8 +206,8 @@ library TickMath {
     /// notion needed
     //checked
     function resolvePos (int24 tick) internal pure returns (int8 wordHigh, uint8 wordLow, int16 word, uint8 bitPos){
-        wordHigh = int8(tick >> 14);//int8(tick >> 14);
-        wordLow = uint8((tick >> 8) % 64);//uint8((tick >> 8) % 64);
+        wordHigh = int8(tick >> 14);
+        wordLow = uint8(tick >> 8) & 63;
         word = int16(tick >> 8);
         bitPos = uint8(tick % 256);
     }
@@ -226,9 +226,9 @@ library TickMath {
     function nextWordHigh (int24 tick, bool buySide) internal pure returns (int24 newTick){
         //overflow may be possibile
         if (buySide){
-            newTick = (tick + 0x4000) & int24(-8404992);//(tick + 0x4000) & int24(-8404992);
+            newTick = ((tick + 0x4000) >> 14) << 14;
         } else {
-            newTick = (tick & int24(-8404992)) - 1;//(tick & int24(-8404992)) - 1;
+            newTick = (((tick)>>14)<<14) - 1;
         }
     }
 
@@ -236,7 +236,7 @@ library TickMath {
     function inDifferentWord (int24 tick0, int24 tick1) internal pure returns (uint8){
         if ((tick0 >> 8) == (tick1 >> 8)) return 0;//same word
         if ((tick0 >> 14) == (tick1 >> 14)) return 1;//same word high but different word low
-        return 2;//different word 
+        return 2;//different word
     }
 
     //checked
@@ -255,13 +255,13 @@ library TickMath {
         q = p | mask;
         if (!setToOne) {
             q -= mask;
-        } 
+        }
     }
-    
+
 
     function getBit (uint256 p, uint8 pos) internal pure returns (bool res)  {
         uint256 mask = 1 << pos;
         res = (p & mask) != 0;
     }
-    
+
 }

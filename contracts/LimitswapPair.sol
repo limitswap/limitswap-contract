@@ -328,7 +328,7 @@ contract LimitswapPair is LimitSwapERC20{
     //transfer output from dealt limit orders after exploition of the tick
     function claimDealtLimitPosition(address user, int24 tick, bool isSellShare, address to) internal {
         //assume that the tick is unexploited
-        //must be called after unexploiting tick
+        //must be called axfter unexploiting tick
         UserPosition memory _position = userPosition[isSellShare?1:0][user][tick];
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         if (_position.tokenOriginalInput > 0) {
@@ -437,8 +437,8 @@ contract LimitswapPair is LimitSwapERC20{
             }
             //add share to user position
             userPosition[zeroForToken1?1:0][sender][tick].userShare = userPosition[zeroForToken1?1:0][sender][tick].userShare.add(share);
-            userPosition[zeroForToken1?1:0][sender][tick].tokenOutputWriteOff = userPosition[zeroForToken1?1:0][sender][tick].tokenOutputWriteOff
-                .add(zeroForToken1?amount0ToAmount1(amount, sqrtPriceX96):amount1ToAmount0(amount, sqrtPriceX96));
+            userPosition[zeroForToken1?1:0][sender][tick].tokenOutputWriteOff = FullMath.mulDiv(tickPosition[zeroForToken1?1:0][tick].dealtPerShareX96,
+                amount, 1<<96);
             userPosition[zeroForToken1?1:0][sender][tick].tokenOriginalInput = userPosition[zeroForToken1?1:0][sender][tick].tokenOriginalInput.add(amount);
             userPosition[zeroForToken1?1:0][sender][tick].lastEntry = tickPosition[zeroForToken1?1:0][tick].clearanceCount;
         }
@@ -489,9 +489,10 @@ contract LimitswapPair is LimitSwapERC20{
         UserPosition storage _position = userPosition[isSellShare?1:0][sender][tick];
         require(share <= _position.userShare);
         if (_position.userShare == 0) return (0,0);
-        _position.tokenOriginalInput = FullMath.mulDiv(share, _position.tokenOriginalInput, _position.userShare);
-        _position.tokenOutputWriteOff = FullMath.mulDiv(share, _position.tokenOutputWriteOff, _position.userShare);
-        _position.userShare -= share;
+        uint256 newShare = _position.userShare.sub(share);
+        _position.tokenOriginalInput = FullMath.mulDiv(newShare, _position.tokenOriginalInput, newShare.add(share));
+        _position.tokenOutputWriteOff = FullMath.mulDiv(newShare, _position.tokenOutputWriteOff, newShare.add(share));
+        _position.userShare = newShare;
         if (isSellShare) {
             tickInfo.sell -= token0Out.toUint128();
             tickInfo.sold -= token1Out.toUint128();
@@ -535,6 +536,7 @@ contract LimitswapPair is LimitSwapERC20{
 
     function getLimitTokens (int24 tick, address user, uint256 share, bool isSellShare) public view returns(uint256, uint256) {
         (, bytes memory data) = address(this).staticcall(
+        //(, bytes memory data) = address(tradeCore).delegatecall(
             abi.encodeWithSelector(
                 ILimitswapTradeCore(tradeCore).getLimitTokensCode.selector,
                 tick,

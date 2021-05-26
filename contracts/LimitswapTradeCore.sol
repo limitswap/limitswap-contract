@@ -14,9 +14,9 @@ import './LimitswapStorage.sol';
 
 contract LimitswapTradeCore is LimitswapStorage{
     using SafeMath for uint256;
-    using SafeCast for uint256; 
+    using SafeCast for uint256;
     using TickBitmap for mapping(int16 => uint256);
-    
+
     function amount0ToAmount1(uint256 amount0, uint160 sqrtPriceX96) public pure returns (uint256 amount1){
         if (sqrtPriceX96 == 0 || amount0 == 0) return 0;
         amount1 = (((amount0.mul(uint256(sqrtPriceX96)))>>96).mul(uint256(sqrtPriceX96)))>>96;
@@ -30,13 +30,13 @@ contract LimitswapTradeCore is LimitswapStorage{
 
     function getLimitTokensCode (int24 tick, address user, uint256 share, bool isSellShare) public view returns(uint256 token0Out, uint256 token1Out) {
         UserPosition memory _position = userPosition[isSellShare?1:0][user][tick];
-        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick); 
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         uint256 amountOut;
         uint256 amountIn;
-        if (isExploited(tick, isSellShare?0:1) || tickPosition[isSellShare?1:0][tick].clearanceCount > _position.lastEntry) { 
+        if (isExploited(tick, isSellShare?0:1) || tickPosition[isSellShare?1:0][tick].clearanceCount > _position.lastEntry) {
             //has been totally sold
-            amountOut = isSellShare ? 
-                amount0ToAmount1(_position.tokenOriginalInput, sqrtPriceX96) : 
+            amountOut = isSellShare ?
+                amount0ToAmount1(_position.tokenOriginalInput, sqrtPriceX96) :
                 amount1ToAmount0(_position.tokenOriginalInput, sqrtPriceX96);
         } else {
             amountOut = FullMath.mulDiv(_position.userShare, tickPosition[isSellShare?1:0][tick].dealtPerShareX96, 1<<96);
@@ -51,7 +51,7 @@ contract LimitswapTradeCore is LimitswapStorage{
         amountOut = FullMath.mulDiv(share, amountOut, _position.userShare);
         (token0Out, token1Out) = isSellShare ? (amountIn, amountOut) : (amountOut, amountIn);
     }
-    
+
     function isExploitedGate (int24 tick, uint buyside) public view returns(bool) {
         return isExploited(tick, buyside);
     }
@@ -68,7 +68,7 @@ contract LimitswapTradeCore is LimitswapStorage{
         wordHighPos = uint8(int256(wordHigh) + 127);
     }
 
-    function tradeToTick (StepState memory stepState) 
+    function tradeToTick (StepState memory stepState)
          internal view returns(bool success, uint256 amountOut, uint256 curveDeep)  {
         uint160 nextSqrtPriceX96 = TickMath.getSqrtRatioAtTick(stepState.nextTick); //to save gas
         //buyside = 1 -> curveDeep in Y
@@ -79,7 +79,7 @@ contract LimitswapTradeCore is LimitswapStorage{
             uint256 curveOut = stepState.buyside?SqrtPriceMath.getAmount0Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false):SqrtPriceMath.getAmount1Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false);
             amountOut = curveOut + stepState.limitDeep;
             success = true;
-        } 
+        }
     }
 
     function tradeAllRemainingByCurve (FinderState memory finderState) internal view returns(FinderState memory)  {
@@ -105,7 +105,6 @@ contract LimitswapTradeCore is LimitswapStorage{
               liquidity.toUint128(), false);
         return finderState;
     }
-    //event Debug1(int24 , uint256 , uint256 );
 
     function findNextWordHigh (FinderState memory finderState) internal view returns(FinderState memory, bool)   {
             //make sure price is exactly at curTick
@@ -155,12 +154,11 @@ contract LimitswapTradeCore is LimitswapStorage{
                         finderState.curTick = nextTick;
                         return (finderState, false);
                     } else {
-                        finderState.sqrtPriceX96 = finderState.sqrtPriceX96;
                         finderState = tradeAllRemainingByCurve(finderState);
                         return (finderState, false);
                     }
             }
-        }   
+        }
     }
     //bool continue
     function findNextWordLow (FinderState memory finderState)  internal view returns(FinderState memory, bool)   {
@@ -212,14 +210,13 @@ contract LimitswapTradeCore is LimitswapStorage{
                     finderState.curTick = nextTick;
                     return (finderState, false);
                 } else {
-                    finderState.sqrtPriceX96 = finderState.sqrtPriceX96;
                     finderState = tradeAllRemainingByCurve(finderState);
                     return (finderState, false);
-                }      
+                }
             }
         }
     }
-    
+
     function tradeInWord (FinderState memory finderState) internal view returns(FinderState memory, tickDeep memory)  {
             //make sure price is exactly at curTick
         uint256 amountIn = finderState.amountIn;
@@ -254,7 +251,7 @@ contract LimitswapTradeCore is LimitswapStorage{
             if ((finderState.buyside && nextTick > finderState.stopTick) || (!finderState.buyside && nextTick < finderState.stopTick)) {
                 nextTick = finderState.stopTick;
             }
-            (bool success, uint256 output, uint256 curveDeep) 
+            (bool success, uint256 output, uint256 curveDeep)
                 = tradeToTick(StepState(finderState.amountIn, 0, finderState.sqrtPriceX96, nextTick, 0, 0, finderState.buyside));
             if (success) {
                 //move to next tick
@@ -267,11 +264,11 @@ contract LimitswapTradeCore is LimitswapStorage{
                 finderState = tradeAllRemainingByCurve(finderState);
                 finderState.amountIn = 0;
                 finderState.curTick = TickMath.getTickAtSqrtRatio(finderState.sqrtPriceX96);
-                return (finderState, Tick[nextTick]);  
+                return (finderState, Tick[nextTick]);
             }
         }
     }
-    
+
     function tradeAtTick (FinderState memory finderState) internal view returns(FinderState memory, tickDeep memory)  {
         if (isExploited(finderState.curTick, finderState.buyside?1:0)) return (finderState, tickDeep(0,0,0,0));
         tickDeep memory tickInfo = Tick[finderState.curTick];
@@ -392,8 +389,8 @@ contract LimitswapTradeCore is LimitswapStorage{
         if(finderState.amountIn == 0) return (finderState, tickDeep(0,0,0,0), false);
         if (TickMath.getSqrtRatioAtTick(finderState.curTick) != finderState.sqrtPriceX96){
             //first try to move to the closet tick
-            int24 nextTick = finderState.buyside ? finderState.curTick + 1 : finderState.curTick; 
-            (bool success, uint256 output, uint256 curveDeep) 
+            int24 nextTick = finderState.buyside ? finderState.curTick + 1 : finderState.curTick;
+            (bool success, uint256 output, uint256 curveDeep)
                 = tradeToTick(StepState(finderState.amountIn, 0, currentSqrtPriceX96, nextTick, 0, 0, finderState.buyside));
             if (success) {
                 //move to next tick
@@ -404,7 +401,7 @@ contract LimitswapTradeCore is LimitswapStorage{
                 //still stuck at [fromTick, fromTick+1)
                 finderState = tradeAllRemainingByCurve(finderState);
                 finderState.amountIn = 0;
-                return (finderState, tickDeep(0,0,0,0), false);  
+                return (finderState, tickDeep(0,0,0,0), false);
             }
         }
         tickDeep memory tickInfo;
@@ -440,7 +437,7 @@ contract LimitswapTradeCore is LimitswapStorage{
             if (finderState.curTick < fromTick) rangeExecLimitOrder(finderState.curTick + 1, fromTick, 1);
         }
         //update global tracers
-        currentSqrtPriceX96 = finderState.sqrtPriceX96; 
+        currentSqrtPriceX96 = finderState.sqrtPriceX96;
         //when buyside = 1, deepBurned in Y, amountIn in Y, amountOut in X, for user: Y->X, for pool: Y up X down
         //when buyside = 0, deepBurned in X, amountIn in X, amountOut in Y, for user: X->Y, for pool: X up Y down
         amountOut = buyside ? SqrtPriceMath.getAmount0Delta(sqrtPriceX96, finderState.sqrtPriceX96, liquidity.toUint128(), true)
@@ -467,15 +464,15 @@ contract LimitswapTradeCore is LimitswapStorage{
                 //liquidity unchanged
             }
         }
-        return (finderState.amountIn, finderState.amountOut, finderState.sqrtPriceX96);  
+        return (finderState.amountIn, finderState.amountOut, finderState.sqrtPriceX96);
     }
-    //totalLimit0&1 is only used for display, so it may have a little tolerant for better look 
+    //totalLimit0&1 is only used for display, so it may have a little tolerant for better look
     uint256 constant tolerant = 1000;
 
     function updateDeepGate (int24 tick, uint128 buy, uint128 bought, uint128 sell, uint128 sold, uint160 sqrtPriceX96, int256 newDeep0, int256 newDeep1) public {
         updateDeep(tick, tickDeep(buy, bought, sell, sold), sqrtPriceX96, newDeep0, newDeep1);
     }
-    
+
     function clearTickPosition (int24 tick, uint256 isSellShare) private {
         tickPosition[isSellShare][tick].totalShare = 0;
         tickPosition[isSellShare][tick].dealtPerShareX96 = 0;
@@ -490,7 +487,7 @@ contract LimitswapTradeCore is LimitswapStorage{
                 );
         }
     }
-    
+
 
     function updateDeep(int24 tick, tickDeep memory tickInfo, uint160 sqrtPriceX96, int256 newDeep0, int256 newDeep1) internal {
         (int8 wordHigh,, int16 word,) = TickMath.resolvePos(tick);
@@ -503,7 +500,7 @@ contract LimitswapTradeCore is LimitswapStorage{
             clearTickPosition(tick, 0);
             //unExploitedTick
             unExploitedTick(tick, 0);
-        } 
+        }
         else if (Tick[tick].bought < tickInfo.bought){
             dealAtTickPosition(tick, 0, tickInfo.bought - Tick[tick].bought);
         }

@@ -40,9 +40,11 @@ contract LimitswapMine is Ownable {
         uint256 accMinedPerShare; // Accumulated SUSHIs per share, times 1e12. See below.
     }
     // The LimitSwap TOKEN!
-    LimitswapToken public limitswapToken;
+    LimitswapToken public immutable limitswapToken;
     // Limitswap Token mined per block.
     uint256 public minedPerBlock;
+    // Mining will stop when reached max amount
+    uint256 public immutable maxSupply;
     // Info of each pool.
     PoolInfo[] public poolInfo;
     // Info of each user that stakes tokens.
@@ -63,11 +65,13 @@ contract LimitswapMine is Ownable {
     constructor(
         LimitswapToken _limitswapToken,
         uint256 _minedPerBlock,
-        uint256 _startBlock
+        uint256 _startBlock,
+        uint256 _maxSupply
     ) {
         limitswapToken = _limitswapToken;
         minedPerBlock = _minedPerBlock;
         startBlock = _startBlock;
+        maxSupply = _maxSupply;
     }
 
     function poolLength() external view returns (uint256) {
@@ -128,7 +132,7 @@ contract LimitswapMine is Ownable {
     function pendingAmount(uint256 _pid, address _user)
         external
         view
-        returns (uint256)
+        returns (uint256 _pending)
     {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
@@ -144,7 +148,10 @@ contract LimitswapMine is Ownable {
                 minedAmount.mul(1e12).div(totalDeposit)
             );
         }
-        return user.amount.mul(accMinedPerShare).div(1e12).sub(user.rewardDebt);
+        _pending = user.amount.mul(accMinedPerShare).div(1e12).sub(user.rewardDebt);
+        if (maxSupply > 0){
+            if(limitswapToken.totalSupply().add(_pending) > maxSupply) _pending = limitswapToken.totalSupply().sub(maxSupply);
+        }
     }
 
     // Update reward vairables for all pools. Be careful of gas spending!
@@ -171,6 +178,9 @@ contract LimitswapMine is Ownable {
                 .mul(minedPerBlock)
                 .mul(pool.allocPoint)
                 .div(totalAllocPoint);
+        if(maxSupply > 0) {
+            if(minedAmount > maxSupply.sub(limitswapToken.totalSupply())) minedAmount = maxSupply.sub(limitswapToken.totalSupply());
+        }
         limitswapToken.mint(address(this), minedAmount);
         pool.accMinedPerShare = pool.accMinedPerShare.add(
             minedAmount.mul(1e12).div(totalDeposit)

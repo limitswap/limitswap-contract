@@ -231,7 +231,7 @@ contract('LimitswapPair', (accounts) => {
         //console.log(' expect output for 10 A',web3.utils.fromWei((await limitSwap.estOutput.call(web3.utils.toWei('10'), false))[0]));//4629
 
         await testCoinA.mint(limitSwap.address, web3.utils.toBN(web3.utils.toWei('300')), { from: accounts[0] });
-        console.log(' est gas for swap 200 A', await limitSwap.swap.estimateGas(web3.utils.toBN(web3.utils.toWei('200')),false, accounts[0], { from: accounts[0] }));
+        //console.log(' est gas for swap 200 A', await limitSwap.swap.estimateGas(web3.utils.toBN(web3.utils.toWei('200')),false, accounts[0], { from: accounts[0] }));
         //console.log(' est gas for swap 300 A', await limitSwap.swap.estimateGas(web3.utils.toBN(web3.utils.toWei('300')),false, accounts[0], { from: accounts[0] }));
         // console.log('accounts[0]: swap 200 A');
         // var balance0B0 = await testCoinB.balanceOf.call(accounts[0]);
@@ -373,6 +373,78 @@ contract('LimitswapRouter', (accounts) => {
     });
 });
 
+contract('Test for changes on limit orders', (accounts) => {
+    it('should endure test', async () =>{
+        //(5 ETH, 100A), (100A, 20000B)
+        const router = await LimitswapRouter.deployed();
+        var testCoinA = await TestCoinA.deployed();
+        const testCoinB = await TestCoinB.deployed();
+        const weth = await WETH.deployed();
+        while (testCoinA.address > weth.address) {
+            testCoinA = await TestCoinA.new();
+        }
+        await testCoinA.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
+        await testCoinA.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
+        await router.addLiquidityETH(testCoinA.address, web3.utils.toBN(web3.utils.toWei('20')),
+            (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.001')});
+        const info1 = await router.getPairInfo.call(testCoinA.address, weth.address);
+        const pair = await LimitswapPair.at(info1[2]);
+        console.log(' LP: ', web3.utils.fromWei(await pair.balanceOf.call(accounts[3])));
+        await pair.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
+        console.log(' tick', (await pair.currentTick.call()).toString());
+        await router.putLimitOrderETH(info1[2],web3.utils.toBN('-99140'),{from: accounts[3], value: web3.utils.toWei('0.01')});
+        res = await pair.getDeep.call( web3.utils.toBN('-99140'));
+        console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+        console.log(' tick', (await pair.currentTick.call()).toString());
+        var sellShare = await pair.sellShare.call(accounts[3],web3.utils.toBN('-99140'));
+        res = await pair.getLimitTokens.call( web3.utils.toBN('-99140'), accounts[3], sellShare, true);
+        console.log(' accounts[3] -99140 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+        var buyShare = await pair.buyShare.call(accounts[3],web3.utils.toBN('-99140'));
+        res = await pair.getLimitTokens.call( web3.utils.toBN('-99140'), accounts[3], buyShare, false);
+        console.log(' accounts[3] -99140 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+
+        await router.swapExactTokensForETH(web3.utils.toBN(web3.utils.toWei('10')),
+                '0', [testCoinA.address, weth.address],accounts[3],
+                (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
+        res = await pair.getDeep.call( web3.utils.toBN('-99140'));
+        //console.log(await pair.isExploited.call(web3.utils.toBN('-99140'), 0));
+        console.log(await pair.isExploited.call(web3.utils.toBN('-99140'), 1));
+        console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+        console.log(' tick', (await pair.currentTick.call()).toString());
+        //await pair.getLimitTokens(web3.utils.toBN('-99140'), accounts[3], buyShare, false);
+        res = await pair.getLimitTokens.call( web3.utils.toBN('-99140'), accounts[3], buyShare, false);
+        console.log(' accounts[3] -99140 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+
+        await router.swapExactTokensForETH(web3.utils.toBN(web3.utils.toWei('100')),
+                '0', [testCoinA.address, weth.address],accounts[3],
+                (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
+                res = await pair.getDeep.call( web3.utils.toBN('-99140'));
+                console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+        console.log(' tick', (await pair.currentTick.call()).toString());
+        res = await pair.getLimitTokens.call( web3.utils.toBN('-99140'), accounts[3], buyShare, false);
+        console.log(' accounts[3] -99140 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+        console.log(' buyShare: ', web3.utils.fromWei(buyShare));
+
+        await router.cancelLimitOrder(info1[2], web3.utils.toBN('-99140'), buyShare.div(web3.utils.toBN(100)), false, {from:accounts[3]});
+        var buyShare = await pair.buyShare.call(accounts[3],web3.utils.toBN('-99140'));
+        console.log(' buyShare: ', web3.utils.fromWei(buyShare));
+        res = await pair.getLimitTokens.call( web3.utils.toBN('-99140'), accounts[3], buyShare, false);
+        console.log(' accounts[3] -99140 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+
+        await router.getAmountOut.call(web3.utils.toBN(web3.utils.toWei('115')),[testCoinA.address, weth.address]);
+        await router.swapExactTokensForETH(web3.utils.toBN(web3.utils.toWei('300')),
+                '0', [testCoinA.address, weth.address],accounts[3],
+                (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
+                res = await pair.getDeep.call( web3.utils.toBN('-99140'));
+                console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+        console.log(' tick', (await pair.currentTick.call()).toString());
+        res = await pair.getLimitTokens.call( web3.utils.toBN('-99140'), accounts[3], buyShare, false);
+        console.log(' accounts[3] -99140 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
+        //console.log(await pair.isExploited.call(web3.utils.toBN('-99140'), 0));
+        console.log(await pair.isExploited.call(web3.utils.toBN('-99140'), 1));
+        });
+});
+
 contract('LimitswapMine', (accounts) => {
     it('should be set by owner', async () =>{
         const miner = await LimitswapMine.deployed();
@@ -387,6 +459,33 @@ contract('LimitswapMine', (accounts) => {
         const testCoinA = await TestCoinA.deployed();
         await testCoinA.mint(accounts[1], web3.utils.toWei('100'), {from: accounts[1]});
         await testCoinA.approve(miner.address, web3.utils.toWei('99999999999'), {from: accounts[1]});
+        console.log('max supply: ', web3.utils.fromWei(await miner.maxSupply.call()));
+        console.log('accounts[1] mine:');
+        await miner.deposit('0', web3.utils.toWei('1'), {from: accounts[1]});
+        console.log(' pending: ', web3.utils.fromWei(await miner.pendingAmount.call('0', accounts[1])), ' @ ', await web3.eth.getBlockNumber());
+        await testCoinA.mint(accounts[1], web3.utils.toWei('0'), {from: accounts[1]});
+        console.log(' pending: ', web3.utils.fromWei(await miner.pendingAmount.call('0', accounts[1])), ' @ ', await web3.eth.getBlockNumber());
+        console.log( 'accounts[1] LSP balance: ', web3.utils.fromWei(await token.balanceOf.call(accounts[1])));
+        await miner.claim('0', {from: accounts[1]});
+        console.log( 'accounts[1] LSP balance: ', web3.utils.fromWei(await token.balanceOf.call(accounts[1])));
+        await testCoinA.mint(accounts[1], web3.utils.toWei('0'), {from: accounts[1]});
+        await testCoinA.mint(accounts[1], web3.utils.toWei('0'), {from: accounts[1]});
+        console.log(' pending: ', web3.utils.fromWei(await miner.pendingAmount.call('0', accounts[1])), ' @ ', await web3.eth.getBlockNumber());
+        var balance0 = await testCoinA.balanceOf.call(accounts[1]);
+        await miner.withdraw('0', await miner.depositedAmount.call('0', accounts[1]), {from: accounts[1]});
+        var balance1 = await testCoinA.balanceOf.call(accounts[1]);
+        console.log(' withdrawTestCoinA: ', web3.utils.fromWei(balance1.sub(balance0)));
+        console.log(' should be 0: ',web3.utils.fromWei(await miner.depositedAmount.call('0', accounts[1])));
+    });
+    it('should stop mining when reaching maxSupply', async () =>{
+        const token = await LimitswapToken.new({from: accounts[0]});
+        const miner = await LimitswapMine.new(token.address, '1000000000000000000', '0', '1000000000000000000');
+        const testCoinA = await TestCoinA.deployed();
+        await testCoinA.mint(accounts[1], web3.utils.toWei('100'), {from: accounts[1]});
+        await testCoinA.approve(miner.address, web3.utils.toWei('99999999999'), {from: accounts[1]});
+        await token.transferOwnership(miner.address, {from: accounts[0]});
+        await miner.add('100', testCoinA.address, true, {from: accounts[0]});
+        console.log('max supply: ', web3.utils.fromWei(await miner.maxSupply.call()));
         console.log('accounts[1] mine:');
         await miner.deposit('0', web3.utils.toWei('1'), {from: accounts[1]});
         console.log(' pending: ', web3.utils.fromWei(await miner.pendingAmount.call('0', accounts[1])), ' @ ', await web3.eth.getBlockNumber());
