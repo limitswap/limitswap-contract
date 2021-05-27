@@ -508,7 +508,7 @@ contract LimitswapPair is LimitSwapERC20{
         }
         if (!isSellShare && token0Out >0){
             _reward(token0Out.mul(3).div(100), 0);
-            token0Out = token0Out.sub(token1Out.mul(3).div(100));
+            token0Out = token0Out.sub(token0Out.mul(3).div(100));
         }
         //no fee will be charged to cancel limit orders
         //transfer to msg.sender for further process

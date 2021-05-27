@@ -494,10 +494,10 @@ contract LimitswapTradeCore is LimitswapStorage{
         //uint128+uint128 may overflow, check elsewhere
         if (isExploited(tick, 0)){//has been totally bought
             //set tickInfo
-            tickInfo.bought += amount1ToAmount0(tickInfo.buy, sqrtPriceX96).toUint128();
-            tickInfo.buy = 0;
+            tickInfo.sold += amount0ToAmount1(tickInfo.sell, sqrtPriceX96).toUint128();
+            tickInfo.sell = 0;
             //set tickPosition
-            clearTickPosition(tick, 0);
+            clearTickPosition(tick, 1);
             //unExploitedTick
             unExploitedTick(tick, 0);
         }
@@ -506,10 +506,10 @@ contract LimitswapTradeCore is LimitswapStorage{
         }
         if (isExploited(tick, 1)){//has been totally sold
             //set tickInfo
-            tickInfo.sold += amount0ToAmount1(tickInfo.sell, sqrtPriceX96).toUint128();
-            tickInfo.sell = 0;
+            tickInfo.bought += amount1ToAmount0(tickInfo.buy, sqrtPriceX96).toUint128();
+            tickInfo.buy = 0;
             //set tickPosition
-            clearTickPosition(tick, 1);
+            clearTickPosition(tick, 0);
             //unExploitedTick
             unExploitedTick(tick, 1);
         }
