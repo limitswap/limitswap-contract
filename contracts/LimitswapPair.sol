@@ -288,9 +288,9 @@ contract LimitswapPair is LimitSwapERC20{
 
     function updateDeep(int24 tick, tickDeep memory tickInfo, uint160 sqrtPriceX96, int256 newDeep0, int256 newDeep1) private {
         // bytes4(keccak256(bytes('updateDeepGate(int24,uint128,uint128,uint128,uint128,uint160,int256,int256)')));
-        (bool success,) = tradeCore.delegatecall(abi.encodeWithSelector(0xf46c855e,
+        (bool success,bytes memory result) = tradeCore.delegatecall(abi.encodeWithSelector(0xf46c855e,
              tick, tickInfo.buy, tickInfo.bought, tickInfo.sell, tickInfo.sold, sqrtPriceX96, newDeep0, newDeep1));
-        require(success);
+        require(success, string(result));
     }
 
     function transferTokens (address to, uint256 token0Out, uint256 token1Out, bool feeOn) internal returns(uint256 fee0, uint256 fee1){
@@ -475,6 +475,7 @@ contract LimitswapPair is LimitSwapERC20{
     function cancelLimitOrder(int24 tick, uint256 share, bool isSellShare) lock external returns (uint256 token0Out, uint256 token1Out){
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         //handle with exploiting
+        //return (amount0ToAmount1(Tick[tick].sell, sqrtPriceX96).toUint128(),Tick[tick].sell);
         updateDeep(tick, Tick[tick], sqrtPriceX96, 0, 0);
         tickDeep memory tickInfo = Tick[tick];
         address sender = msg.sender;
@@ -486,13 +487,14 @@ contract LimitswapPair is LimitSwapERC20{
         //get outputs
         (token0Out, token1Out) = getLimitTokens(tick, sender, share, isSellShare);
         //check input
-        UserPosition storage _position = userPosition[isSellShare?1:0][sender][tick];
-        require(share <= _position.userShare);
+        UserPosition memory _position = userPosition[isSellShare?1:0][sender][tick];
+        share = Math.min(share, _position.userShare);
         if (_position.userShare == 0) return (0,0);
         uint256 newShare = _position.userShare.sub(share);
-        _position.tokenOriginalInput = FullMath.mulDiv(newShare, _position.tokenOriginalInput, newShare.add(share));
-        _position.tokenOutputWriteOff = FullMath.mulDiv(newShare, _position.tokenOutputWriteOff, newShare.add(share));
-        _position.userShare = newShare;
+        _position.tokenOriginalInput = FullMath.mulDiv(newShare, _position.tokenOriginalInput, _position.userShare);
+        _position.tokenOutputWriteOff = FullMath.mulDiv(newShare, _position.tokenOutputWriteOff, _position.userShare);
+        _position.userShare = newShare;  //update userShare here will cause reverting. WHY???
+        userPosition[isSellShare?1:0][sender][tick] = _position;
         if (isSellShare) {
             tickInfo.sell -= token0Out.toUint128();
             tickInfo.sold -= token1Out.toUint128();
@@ -642,4 +644,6 @@ contract LimitswapPair is LimitSwapERC20{
                 default { return(add(data, 32), returndatasize()) }
         }
     }
+
+
 }

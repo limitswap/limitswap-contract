@@ -244,7 +244,7 @@ library TickMath {
         if (setToOne){
             q = p | (1 << uint256(pos));
         } else {
-            q = p & (0 << uint256(pos));
+            q = p - (p & (1 << uint256(pos)));
         }
     }
 

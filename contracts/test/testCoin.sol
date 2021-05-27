@@ -9,7 +9,7 @@ contract TestCoin  {
 
     string public name;
     string public symbol;
-    uint8 public constant decimals = 18;
+    uint8 public decimals = 18;
     uint  public totalSupply;
     mapping(address => uint) public balanceOf;
     mapping(address => mapping(address => uint)) public allowance;
@@ -74,3 +74,10 @@ contract testCoinB is TestCoin {
     }
 }
 
+contract testCoinU is TestCoin {
+    constructor () {
+        name = 'testCoinA';
+        symbol = 'A';
+        decimals = 6;
+    }
+}

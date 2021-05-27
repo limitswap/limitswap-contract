@@ -307,37 +307,7 @@ contract LimitswapTradeCore is LimitswapStorage{
         return (finderState, tickInfo);
     }
 
-    function unExploitedTick (int24 tick, uint256 buyside) public {
-        (int8 wordHigh, uint8 wordLow, int16 word, uint8 posInWord) = TickMath.resolvePos(tick);
-        if (TickMath.getBit(wordHighExploited[buyside], wordHighMap(wordHigh))) {
-            //entire wordHigh has been expolited
-            wordHighExploited[buyside] = TickMath.setSingle(wordHighExploited[buyside], wordHighMap(wordHigh), false);
-            wordLowExploited[buyside][wordHigh] = TickMath.setSingle(uint256(-1), wordLow, false);
-            tickExploited[buyside][word] = TickMath.setSingle(uint256(-1), posInWord, false);
-            DeepWordHigh[buyside][wordHigh] = 0;
-            //DeepWordHighPriced[buyside][wordHigh] = 0;
-        }
-        else if (TickMath.getBit(wordLowExploited[buyside][wordHigh], wordLow)) {
-            //entire word has been expolited
-            wordLowExploited[buyside][wordHigh] = TickMath.setSingle(wordLowExploited[buyside][wordHigh], wordLow, false);
-            tickExploited[buyside][word] = TickMath.setSingle(uint256(-1), posInWord, false);
-            DeepWordHigh[buyside][wordHigh] -= DeepWordLow[buyside][word];
-            //DeepWordHighPriced[buyside][wordHigh] -= DeepWordLowPriced[buyside][word];
-            DeepWordLow[buyside][word] = 0;
-            //DeepWordLowPriced[buyside][word] = 0;
-        }
-        else if (TickMath.getBit(tickExploited[buyside][word], posInWord)) {
-            tickExploited[buyside][word] = TickMath.setSingle(tickExploited[buyside][word], posInWord, false);
-            uint256 deepBurned = buyside>0 ?  Tick[tick].buy : Tick[tick].sell;
-            uint256 deepPriced = buyside>0 ? amount1ToAmount0(deepBurned, TickMath.getSqrtRatioAtTick(tick)) : amount0ToAmount1(deepBurned, TickMath.getSqrtRatioAtTick(tick));
-            DeepWordHigh[buyside][wordHigh] -= ((deepBurned<<128) + deepPriced);
-            DeepWordLow[buyside][wordHigh] -= ((deepBurned<<128) + deepPriced);
-            // DeepWordHigh[buyside][wordHigh] -= deepBurned;
-            // DeepWordHighPriced[buyside][wordHigh] -= deepPriced;
-            // DeepWordLow[buyside][word] -= deepBurned;
-            // DeepWordLowPriced[buyside][word] -= deepPriced;
-        }
-    }
+
     //mark every tick between fromTick to toTick (including these two) to exploited
     function rangeExecLimitOrder (int24 fromTick, int24 toTick, uint buyside) internal {
         require (toTick >= fromTick);
@@ -473,6 +443,38 @@ contract LimitswapTradeCore is LimitswapStorage{
         updateDeep(tick, tickDeep(buy, bought, sell, sold), sqrtPriceX96, newDeep0, newDeep1);
     }
 
+    function unExploitedTick (int24 tick, uint256 buyside) public {
+        (int8 wordHigh, uint8 wordLow, int16 word, uint8 posInWord) = TickMath.resolvePos(tick);
+        if (TickMath.getBit(wordHighExploited[buyside], wordHighMap(wordHigh))) {
+            //entire wordHigh has been expolited
+            wordHighExploited[buyside] = TickMath.setSingle(wordHighExploited[buyside], wordHighMap(wordHigh), false);
+            wordLowExploited[buyside][wordHigh] = TickMath.setSingle(uint256(-1), wordLow, false);
+            tickExploited[buyside][word] = TickMath.setSingle(uint256(-1), posInWord, false);
+            DeepWordHigh[buyside][wordHigh] = 0;
+            //DeepWordHighPriced[buyside][wordHigh] = 0;
+        }
+        else if (TickMath.getBit(wordLowExploited[buyside][wordHigh], wordLow)) {
+            //entire word has been expolited
+            wordLowExploited[buyside][wordHigh] = TickMath.setSingle(wordLowExploited[buyside][wordHigh], wordLow, false);
+            tickExploited[buyside][word] = TickMath.setSingle(uint256(-1), posInWord, false);
+            DeepWordHigh[buyside][wordHigh] -= DeepWordLow[buyside][word];
+            //DeepWordHighPriced[buyside][wordHigh] -= DeepWordLowPriced[buyside][word];
+            DeepWordLow[buyside][word] = 0;
+            //DeepWordLowPriced[buyside][word] = 0;
+        }
+        else if (TickMath.getBit(tickExploited[buyside][word], posInWord)) {
+            tickExploited[buyside][word]=TickMath.setSingle(tickExploited[buyside][word], posInWord, false);
+            uint256 deepBurned = buyside>0 ?  Tick[tick].buy : Tick[tick].sell;
+            uint256 deepPriced = buyside>0 ? amount1ToAmount0(deepBurned, TickMath.getSqrtRatioAtTick(tick)) : amount0ToAmount1(deepBurned, TickMath.getSqrtRatioAtTick(tick));
+            DeepWordHigh[buyside][wordHigh] -= ((deepBurned<<128) + deepPriced);
+            DeepWordLow[buyside][wordHigh] -= ((deepBurned<<128) + deepPriced);
+            // DeepWordHigh[buyside][wordHigh] -= deepBurned;
+            // DeepWordHighPriced[buyside][wordHigh] -= deepPriced;
+            // DeepWordLow[buyside][word] -= deepBurned;
+            // DeepWordLowPriced[buyside][word] -= deepPriced;
+        }
+    }
+
     function clearTickPosition (int24 tick, uint256 isSellShare) private {
         tickPosition[isSellShare][tick].totalShare = 0;
         tickPosition[isSellShare][tick].dealtPerShareX96 = 0;
@@ -481,7 +483,9 @@ contract LimitswapTradeCore is LimitswapStorage{
 
     function dealAtTickPosition (int24 tick, uint256 isSellShare, uint256 dealOutput) private {
         if (dealOutput > 0) {
-            require(tickPosition[isSellShare][tick].totalShare > 0, 'DEEPERROR');
+            uint256 totalShare = tickPosition[isSellShare][tick].totalShare;
+            require(totalShare > 0 ,'DeepError');
+            //if(totalShare == 0) return;
             tickPosition[isSellShare][tick].dealtPerShareX96 = tickPosition[isSellShare][tick].dealtPerShareX96.add(
                 FullMath.mulDiv(dealOutput, 1<<96, tickPosition[isSellShare][tick].totalShare)
                 );
@@ -501,8 +505,8 @@ contract LimitswapTradeCore is LimitswapStorage{
             //unExploitedTick
             unExploitedTick(tick, 0);
         }
-        else if (Tick[tick].bought < tickInfo.bought){
-            dealAtTickPosition(tick, 0, tickInfo.bought - Tick[tick].bought);
+        else if (Tick[tick].sold < tickInfo.sold){
+            dealAtTickPosition(tick, 1, tickInfo.sold - Tick[tick].sold);
         }
         if (isExploited(tick, 1)){//has been totally sold
             //set tickInfo
@@ -513,8 +517,8 @@ contract LimitswapTradeCore is LimitswapStorage{
             //unExploitedTick
             unExploitedTick(tick, 1);
         }
-        else if (Tick[tick].sold < tickInfo.sold){
-            dealAtTickPosition(tick, 1, tickInfo.sold - Tick[tick].sold);
+        else if (Tick[tick].bought < tickInfo.bought){
+            dealAtTickPosition(tick, 0, tickInfo.bought - Tick[tick].bought);
         }
         Tick[tick] = tickInfo;
         uint buyside;

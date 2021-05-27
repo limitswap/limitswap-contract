@@ -262,7 +262,7 @@ contract LimitswapRouter {
         } else {
             totalUserShare = ILimitswapPair(pair).buyShare(msg.sender, tick);
         }
-        require (share <= totalUserShare, 'NOT ENOUGH SHARE');
+        if (share > totalUserShare) share = totalUserShare;
         sender = msg.sender;
         (token0Out, token1Out) = ILimitswapPair(pair).cancelLimitOrder(tick, share, isSellShare);
         delete sender;
