@@ -80,6 +80,7 @@ abstract contract LimitSwapERC20 is LimitswapStorage{
 
 
     function _mint(address to, uint256 value) internal {
+        if(value==0) return;
         totalSupply = totalSupply.add(value);
         uint256 oldBalanceTo = balanceOf[to];
         balanceOf[to] = balanceOf[to].add(value);

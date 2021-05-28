@@ -55,16 +55,20 @@ contract LimitswapRouter {
         }
         if (ILimitswapPair(pair).liquidity() > 0) {
             uint160 currentSqrtPriceX96 = ILimitswapPair(pair).currentSqrtPriceX96();
-            uint256 amountBDesired = ILimitswapPair(pair).amount0ToAmount1(amountA, currentSqrtPriceX96);
+            uint256 amountBDesired = tokenA < tokenB ?
+                ILimitswapPair(pair).amount0ToAmount1(amountA, currentSqrtPriceX96):
+                ILimitswapPair(pair).amount1ToAmount0(amountA, currentSqrtPriceX96);
             if (amountB < amountBDesired){
-                uint256 amountADesired = ILimitswapPair(pair).amount1ToAmount0(amountB, currentSqrtPriceX96);
+                uint256 amountADesired = tokenA < tokenB ?
+                    ILimitswapPair(pair).amount1ToAmount0(amountB, currentSqrtPriceX96):
+                    ILimitswapPair(pair).amount0ToAmount1(amountB, currentSqrtPriceX96);
                 remainedA = amountA.sub(amountADesired);
-                amountA = amountADesired;
             } else {
                 remainedB = amountB.sub(amountBDesired);
-                amountB = amountBDesired;
             }
         }
+        //alert when extreme price comes
+        require( amountA!=remainedA && amountA!=remainedA, 'EXTREME PRICE');
     }
 
     function addLiquidity(
@@ -90,7 +94,7 @@ contract LimitswapRouter {
         (uint256 remainedToken, uint256 remainedETH, address pair) = _addLiquidity(token, WETH, amountTokenIn, msg.value);
         amountToken = amountTokenIn.sub(remainedToken);
         amountETH = msg.value.sub(remainedETH);
-        TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken.sub(remainedToken));
+        TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         IWETH(WETH).deposit{value: amountETH}();
         assert(IWETH(WETH).transfer(pair, amountETH));
         liquidity = ILimitswapPair(pair).mint(msg.sender);
