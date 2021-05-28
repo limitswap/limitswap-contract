@@ -62,8 +62,10 @@ abstract contract LimitSwapERC20 is LimitswapStorage{
     function _reward (uint256 reward0, uint256 reward1) internal {
         address _feeCollector = ILimitswapGate(gate).feeCollector();
         if (_feeCollector == address(0)){//reward to users
-            if (reward0>0) reward0PerTokenX96 = reward0PerTokenX96.add((reward0<<96).div(totalSupply));
-            if (reward1>0) reward1PerTokenX96 = reward1PerTokenX96.add((reward1<<96).div(totalSupply));
+            if (totalSupply > 0) {
+                if (reward0>0) reward0PerTokenX96 = reward0PerTokenX96.add((reward0<<96).div(totalSupply));
+                if (reward1>0) reward1PerTokenX96 = reward1PerTokenX96.add((reward1<<96).div(totalSupply));
+            }
         } else {
             TransferHelper.safeTransfer(token0, _feeCollector, reward0);
             TransferHelper.safeTransfer(token1, _feeCollector, reward1);
@@ -475,7 +477,6 @@ contract LimitswapPair is LimitSwapERC20{
     function cancelLimitOrder(int24 tick, uint256 share, bool isSellShare) lock external returns (uint256 token0Out, uint256 token1Out){
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
         //handle with exploiting
-        //return (amount0ToAmount1(Tick[tick].sell, sqrtPriceX96).toUint128(),Tick[tick].sell);
         updateDeep(tick, Tick[tick], sqrtPriceX96, 0, 0);
         tickDeep memory tickInfo = Tick[tick];
         address sender = msg.sender;
@@ -505,12 +506,12 @@ contract LimitswapPair is LimitSwapERC20{
             updateDeep(tick, tickInfo, sqrtPriceX96, 0, -token1Out.toInt256());
         }
         if (isSellShare && token1Out >0){
-            _reward(0, token1Out.mul(3).div(100));
-            token1Out = token1Out.sub(token1Out.mul(3).div(100));
+            _reward(0, token1Out.mul(3).div(1000));
+            token1Out = token1Out.sub(token1Out.mul(3).div(1000));
         }
         if (!isSellShare && token0Out >0){
-            _reward(token0Out.mul(3).div(100), 0);
-            token0Out = token0Out.sub(token0Out.mul(3).div(100));
+            _reward(token0Out.mul(3).div(1000), 0);
+            token0Out = token0Out.sub(token0Out.mul(3).div(1000));
         }
         //no fee will be charged to cancel limit orders
         //transfer to msg.sender for further process
