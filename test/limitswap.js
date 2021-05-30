@@ -266,10 +266,10 @@ contract('LimitswapRouter', (accounts) => {
         await testCoinB.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('40000')), {from: accounts[3]});
         await testCoinA.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
         await testCoinB.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
-        await router.addLiquidityETH(testCoinA.address, web3.utils.toBN(web3.utils.toWei('100')),
+        await router.addLiquidityETH(testCoinA.address, web3.utils.toBN(web3.utils.toWei('100')),'0','0',
             (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('5')});
         await router.addLiquidity(testCoinA.address, testCoinB.address, web3.utils.toWei('100'), web3.utils.toWei('20000'),
-            (Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
+            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
         const info0 = await router.getPairInfo.call(testCoinA.address, testCoinB.address);
         var pairAB = await LimitswapPair.at(info0[2]);
         var LP0 = web3.utils.toBN(await pairAB.balanceOf(accounts[3]));
@@ -282,7 +282,7 @@ contract('LimitswapRouter', (accounts) => {
         [res[0], res[1]] = testCoinA.address < testCoinB.address ? [res[0], res[1]] : [res[1], res[0]];
         console.log( 'accounts[3] LP 0: ', web3.utils.fromWei(res[0]).toString(),' A ',web3.utils.fromWei(res[1]).toString(),' B ');
         await router.addLiquidity(testCoinB.address, testCoinA.address, web3.utils.toWei('20000'), web3.utils.toWei('100'),
-            (Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
+            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
         var LP1 = web3.utils.toBN(await pairAB.balanceOf(accounts[3]));
         console.log(' LP1-LP0: ', web3.utils.fromWei(LP1.sub(LP0)));
         console.log(' totalSupply: ', web3.utils.fromWei(await pairAB.totalSupply.call()));
@@ -387,7 +387,7 @@ contract('Test for changes on limit orders', (accounts) => {
         await testCoinA.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
         await testCoinA.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
         await router.addLiquidityETH(testCoinA.address, web3.utils.toBN(web3.utils.toWei('30')),
-            (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
+            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
         const info1 = await router.getPairInfo.call(testCoinA.address, weth.address);
         const pair = await LimitswapPair.at(info1[2]);
         console.log(' LP: ', web3.utils.fromWei(await pair.balanceOf.call(accounts[3])));
@@ -460,7 +460,7 @@ contract('LimitswapMine', (accounts) => {
         const token = await LimitswapToken.deployed();
         await token.transferOwnership(miner.address, {from: accounts[0]});
         const testCoinA = await TestCoinA.deployed();
-        await miner.add('100', testCoinA.address, true, {from: accounts[0]});
+        await miner.add('100', testCoinA.address, {from: accounts[0]});
     });
     it('should generate tokens by mining', async () =>{
         const miner = await LimitswapMine.deployed();
@@ -493,7 +493,7 @@ contract('LimitswapMine', (accounts) => {
         await testCoinA.mint(accounts[1], web3.utils.toWei('100'), {from: accounts[1]});
         await testCoinA.approve(miner.address, web3.utils.toWei('99999999999'), {from: accounts[1]});
         await token.transferOwnership(miner.address, {from: accounts[0]});
-        await miner.add('100', testCoinA.address, true, {from: accounts[0]});
+        await miner.add('100', testCoinA.address, {from: accounts[0]});
         console.log('max supply: ', web3.utils.fromWei(await miner.maxSupply.call()));
         console.log('accounts[1] mine:');
         await miner.deposit('0', web3.utils.toWei('1'), {from: accounts[1]});
@@ -525,7 +525,7 @@ contract('Test for USDT', (accounts) => {
         await testCoinU.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
         await testCoinU.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
         await router.addLiquidityETH(testCoinU.address, '1000000',
-            (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
+            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
         const info1 = await router.getPairInfo.call(testCoinU.address, weth.address);
         const pair = await LimitswapPair.at(info1[2]);
         console.log(' LP: ', web3.utils.fromWei(await pair.balanceOf.call(accounts[3])));
@@ -627,7 +627,7 @@ contract('Test for USDT 2', (accounts) => {
         }
         await testCoinU.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
         await testCoinU.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
-        await router.addLiquidityETH(testCoinU.address, '2000000',
+        await router.addLiquidityETH(testCoinU.address, '2000000', '0','0',
             (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
         const info1 = await router.getPairInfo.call(testCoinU.address, weth.address);
         const pair = await LimitswapPair.at(info1[2]);

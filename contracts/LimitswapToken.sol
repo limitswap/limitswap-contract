@@ -187,7 +187,7 @@ contract LimitswapToken is ERC20("LimitSwap", "LSP"), Ownable {
         internal
     {
         address currentDelegate = _delegates[delegator];
-        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying SUSHIs (not scaled);
+        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying Tokens (not scaled);
         _delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);
@@ -244,5 +244,15 @@ contract LimitswapToken is ERC20("LimitSwap", "LSP"), Ownable {
         uint256 chainId;
         assembly { chainId := chainid() }
         return chainId;
+    }
+
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        _moveDelegates(_delegates[msg.sender], _delegates[recipient], amount);
+        return ERC20.transfer(recipient, amount);
+    }
+
+    function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
+        _moveDelegates(_delegates[sender], _delegates[recipient], amount);
+        return ERC20.transferFrom(sender, recipient, amount);
     }
 }

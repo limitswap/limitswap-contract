@@ -35,9 +35,9 @@ contract LimitswapMine is Ownable {
     // Info of each pool.
     struct PoolInfo {
         IERC20 depositToken; // Address of token contract.
-        uint256 allocPoint; // How many allocation points assigned to this pool. SUSHIs to distribute per block.
-        uint256 lastRewardBlock; // Last block number that SUSHIs distribution occurs.
-        uint256 accMinedPerShare; // Accumulated SUSHIs per share, times 1e12. See below.
+        uint256 allocPoint; // How many allocation points assigned to this pool. tokens to distribute per block.
+        uint256 lastRewardBlock; // Last block number that tokens distribution occurs.
+        uint256 accMinedPerShare; // Accumulated tokens per share, times 1e12. See below.
     }
     // The LimitSwap TOKEN!
     LimitswapToken public immutable limitswapToken;
@@ -51,7 +51,7 @@ contract LimitswapMine is Ownable {
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when SUSHI mining starts.
+    // The block number when token mining starts.
     uint256 public startBlock;
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -104,12 +104,9 @@ contract LimitswapMine is Ownable {
     // Update the given pool's mining allocation point. Can only be called by the owner.
     function set(
         uint256 _pid,
-        uint256 _allocPoint,
-        bool _withUpdate
+        uint256 _allocPoint
     ) public onlyOwner {
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        massUpdatePools();
         totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(
             _allocPoint
         );
@@ -118,12 +115,9 @@ contract LimitswapMine is Ownable {
 
     // Update minedPerBlock which affecting all pools. Can only be called by the owner.
     function setMinedPerBlock(
-        uint256 _minedPerBlock,
-        bool _withUpdate
+        uint256 _minedPerBlock
     ) public onlyOwner {
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        massUpdatePools();
         minedPerBlock = _minedPerBlock;
     }
 
@@ -181,10 +175,12 @@ contract LimitswapMine is Ownable {
         if(maxSupply > 0) {
             if(minedAmount > maxSupply.sub(limitswapToken.totalSupply())) minedAmount = maxSupply.sub(limitswapToken.totalSupply());
         }
-        limitswapToken.mint(address(this), minedAmount);
-        pool.accMinedPerShare = pool.accMinedPerShare.add(
-            minedAmount.mul(1e12).div(totalDeposit)
-        );
+        if(minedAmount > 0){
+            limitswapToken.mint(address(this), minedAmount);
+            pool.accMinedPerShare = pool.accMinedPerShare.add(
+                minedAmount.mul(1e12).div(totalDeposit)
+            );
+        }
         pool.lastRewardBlock = block.number;
     }
 

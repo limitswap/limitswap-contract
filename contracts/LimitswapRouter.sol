@@ -76,11 +76,14 @@ contract LimitswapRouter {
         address tokenB,
         uint256 amountAIn,
         uint256 amountBIn,
+        uint256 amountAMin,
+        uint256 amountBMin,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         (uint256 remainedA, uint256 remainedB, address pair) = _addLiquidity(tokenA, tokenB, amountAIn, amountBIn);
         amountA = amountAIn.sub(remainedA);
         amountB = amountBIn.sub(remainedB);
+        require(amountA >= amountAMin && amountB >= amountBMin, 'LimitswapRouter: SLIP ALERT');
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
         liquidity = ILimitswapPair(pair).mint(msg.sender);
@@ -89,11 +92,14 @@ contract LimitswapRouter {
     function addLiquidityETH(
         address token,
         uint256 amountTokenIn,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
         (uint256 remainedToken, uint256 remainedETH, address pair) = _addLiquidity(token, WETH, amountTokenIn, msg.value);
         amountToken = amountTokenIn.sub(remainedToken);
         amountETH = msg.value.sub(remainedETH);
+        require(amountToken >= amountTokenMin && amountETH >= amountETHMin, 'LimitswapRouter: SLIP ALERT');
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         IWETH(WETH).deposit{value: amountETH}();
         assert(IWETH(WETH).transfer(pair, amountETH));
