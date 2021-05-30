@@ -78,6 +78,7 @@ contract LimitswapRouter {
         uint256 amountBIn,
         uint256 amountAMin,
         uint256 amountBMin,
+        address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         (uint256 remainedA, uint256 remainedB, address pair) = _addLiquidity(tokenA, tokenB, amountAIn, amountBIn);
@@ -86,7 +87,7 @@ contract LimitswapRouter {
         require(amountA >= amountAMin && amountB >= amountBMin, 'LimitswapRouter: SLIP ALERT');
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
-        liquidity = ILimitswapPair(pair).mint(msg.sender);
+        liquidity = ILimitswapPair(pair).mint(to);
     }
 
     function addLiquidityETH(
@@ -94,6 +95,7 @@ contract LimitswapRouter {
         uint256 amountTokenIn,
         uint256 amountTokenMin,
         uint256 amountETHMin,
+        address to,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) {
         (uint256 remainedToken, uint256 remainedETH, address pair) = _addLiquidity(token, WETH, amountTokenIn, msg.value);
@@ -103,7 +105,7 @@ contract LimitswapRouter {
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
         IWETH(WETH).deposit{value: amountETH}();
         assert(IWETH(WETH).transfer(pair, amountETH));
-        liquidity = ILimitswapPair(pair).mint(msg.sender);
+        liquidity = ILimitswapPair(pair).mint(to);
         // refund dust eth, if any
         if (remainedETH > 0) TransferHelper.safeTransferETH(msg.sender, remainedETH);
     }
@@ -112,6 +114,9 @@ contract LimitswapRouter {
         address tokenA,
         address tokenB,
         uint256 share,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256 amountA, uint256 amountB) {
         (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
@@ -122,25 +127,26 @@ contract LimitswapRouter {
         ILimitswapPair(pair).burn(address(this));
         amountA = IERC20(tokenA).balanceOf(address(this)).sub(balanceA);
         amountB = IERC20(tokenB).balanceOf(address(this)).sub(balanceB);
-        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
+        require(amountA >= amountAMin && amountB >= amountBMin, 'LimitswapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB, to);
     }
 
-    function transferExtraTokens(address tokenA, address tokenB, uint256 balanceA, uint256 balanceB) private {
+    function transferExtraTokens(address tokenA, address tokenB, uint256 balanceA, uint256 balanceB, address to) private {
         //without checking token order
         //must make sure tokenA < tokenB before calling
         uint256 amountA = IERC20(tokenA).balanceOf(address(this)).sub(balanceA);
         uint256 amountB = IERC20(tokenB).balanceOf(address(this)).sub(balanceB);
         if (tokenA == WETH) {
             IWETH(WETH).withdraw(amountA);
-            TransferHelper.safeTransferETH(msg.sender, amountA);
+            TransferHelper.safeTransferETH(to, amountA);
         } else {
-            TransferHelper.safeTransfer(tokenA, msg.sender, amountA);
+            TransferHelper.safeTransfer(tokenA, to, amountA);
         }
         if (tokenB == WETH) {
             IWETH(WETH).withdraw(amountB);
-            TransferHelper.safeTransferETH(msg.sender, amountB);
+            TransferHelper.safeTransferETH(to, amountB);
         } else {
-            TransferHelper.safeTransfer(tokenB, msg.sender, amountB);
+            TransferHelper.safeTransfer(tokenB, to, amountB);
         }
     }
 
@@ -258,7 +264,7 @@ contract LimitswapRouter {
         share = ILimitswapPair(pair).putLimitOrder(tick, amountIn, isSellShare);
         delete sender;
         limitOrders[msg.sender].pushFront(packRecord(pair, tick, isSellShare));
-        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB, msg.sender);
     }
 
     function cancelLimitOrder (address pair, int24 tick, uint256 share, bool isSellShare) external returns(uint256 token0Out, uint256 token1Out) {
@@ -279,7 +285,7 @@ contract LimitswapRouter {
         if(share == totalUserShare){
             limitOrders[msg.sender].remove(packRecord(pair, tick, isSellShare));
         }
-        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB, msg.sender);
     }
 //add: 2021.5.13
     function putLimitOrderETH (address pair, int24 tick) external payable returns (uint256 share) {
@@ -295,7 +301,7 @@ contract LimitswapRouter {
         share = ILimitswapPair(pair).putLimitOrder(tick, msg.value, isSellShare);
         delete sender;
         limitOrders[msg.sender].pushFront(packRecord(pair, tick, isSellShare));
-        transferExtraTokens(tokenA, tokenB, balanceA, balanceB);
+        transferExtraTokens(tokenA, tokenB, balanceA, balanceB, msg.sender);
     }
 
     function getLimitOrdersRaw(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records){

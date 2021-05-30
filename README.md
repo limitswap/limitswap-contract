@@ -189,7 +189,7 @@
 
 # LimitswapRouter
 
-- function **addLiquidity**(address tokenA,address tokenB,uint256 amountAIn,uint256 amountBIn,uint256 deadline) external ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+- function **addLiquidity**(address tokenA,address tokenB,uint256 amountAIn, uint256 amountBIn, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) external ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
   *添加流动性，两个代币都是ERC20*
 
@@ -201,9 +201,15 @@
 
   amountBIn:B数量
 
+  amountAMin:最小消耗的A数量
+
+  amountBMin:最小消耗的B数量
+
+  to: 接收LP的地址
+
   deadline: 超时时间戳（秒）
 
-- function **addLiquidityETH**(address token, uint256 amountTokenIn, uint256 deadline) external payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) ;
+- function **addLiquidityETH**(address token, uint256 amountTokenIn, uint256 amountTokenMin, uint256 amountETHMin, address to， uint256 deadline) external payable ensure(deadline) returns (uint amountToken, uint amountETH, uint liquidity) ;
 
   *添加流动性，一个代币是ETH*
 
@@ -211,9 +217,15 @@
 
   amountTokenIn: token数量
 
+  amountTokenMin:最小消耗的token数量
+
+  amountETHMin:最小消耗的eth数量
+
+  to: 接收LP的地址
+
   deadline: 超时时间戳（秒）
 
-- function **removeLiquidity**(address tokenA, address tokenB, uint256 share, uint256 deadline) external payable ensure(deadline) returns (uint256 amountA, uint256 amountB);
+- function **removeLiquidity**(address tokenA, address tokenB, uint256 share, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) external payable ensure(deadline) returns (uint256 amountA, uint256 amountB);
 
   *移除流动性*
 
@@ -224,6 +236,12 @@
   tokenB:B地址
 
   share:数量
+
+  amountAMin:最小获得的A数量
+
+  amountBMin:最小获得的B数量
+
+  to: 接收产出代币的地址
 
   deadline: 超时时间戳（秒）
 

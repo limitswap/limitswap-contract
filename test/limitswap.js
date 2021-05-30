@@ -266,10 +266,10 @@ contract('LimitswapRouter', (accounts) => {
         await testCoinB.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('40000')), {from: accounts[3]});
         await testCoinA.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
         await testCoinB.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
-        await router.addLiquidityETH(testCoinA.address, web3.utils.toBN(web3.utils.toWei('100')),'0','0',
+        await router.addLiquidityETH(testCoinA.address, web3.utils.toBN(web3.utils.toWei('100')),'0','0', accounts[3],
             (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('5')});
         await router.addLiquidity(testCoinA.address, testCoinB.address, web3.utils.toWei('100'), web3.utils.toWei('20000'),
-            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
+            '0','0', accounts[3], (Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
         const info0 = await router.getPairInfo.call(testCoinA.address, testCoinB.address);
         var pairAB = await LimitswapPair.at(info0[2]);
         var LP0 = web3.utils.toBN(await pairAB.balanceOf(accounts[3]));
@@ -282,7 +282,7 @@ contract('LimitswapRouter', (accounts) => {
         [res[0], res[1]] = testCoinA.address < testCoinB.address ? [res[0], res[1]] : [res[1], res[0]];
         console.log( 'accounts[3] LP 0: ', web3.utils.fromWei(res[0]).toString(),' A ',web3.utils.fromWei(res[1]).toString(),' B ');
         await router.addLiquidity(testCoinB.address, testCoinA.address, web3.utils.toWei('20000'), web3.utils.toWei('100'),
-            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
+            '0','0', accounts[3],(Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
         var LP1 = web3.utils.toBN(await pairAB.balanceOf(accounts[3]));
         console.log(' LP1-LP0: ', web3.utils.fromWei(LP1.sub(LP0)));
         console.log(' totalSupply: ', web3.utils.fromWei(await pairAB.totalSupply.call()));
@@ -303,7 +303,7 @@ contract('LimitswapRouter', (accounts) => {
         var B0 = web3.utils.toBN(await testCoinB.balanceOf(accounts[3]));
         console.log( 'accounts[3] AB: ', web3.utils.fromWei(A0).toString(),' A ',web3.utils.fromWei(B0).toString(),' B ');
         await pairAB.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
-        await router.removeLiquidity(testCoinA.address, testCoinB.address, LP0,
+        await router.removeLiquidity(testCoinA.address, testCoinB.address, LP0, '0','0',accounts[3],
             (Date.now()+50000).toString().substr(0,10), {from: accounts[3]});
         var A1 = web3.utils.toBN(await testCoinA.balanceOf(accounts[3]));
         var B1 = web3.utils.toBN(await testCoinB.balanceOf(accounts[3]));
@@ -387,7 +387,7 @@ contract('Test for changes on limit orders', (accounts) => {
         await testCoinA.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
         await testCoinA.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
         await router.addLiquidityETH(testCoinA.address, web3.utils.toBN(web3.utils.toWei('30')),
-            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
+            '0','0', accounts[3],(Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
         const info1 = await router.getPairInfo.call(testCoinA.address, weth.address);
         const pair = await LimitswapPair.at(info1[2]);
         console.log(' LP: ', web3.utils.fromWei(await pair.balanceOf.call(accounts[3])));
@@ -525,7 +525,7 @@ contract('Test for USDT', (accounts) => {
         await testCoinU.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
         await testCoinU.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
         await router.addLiquidityETH(testCoinU.address, '1000000',
-            '0','0',(Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
+            '0','0', accounts[3], (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
         const info1 = await router.getPairInfo.call(testCoinU.address, weth.address);
         const pair = await LimitswapPair.at(info1[2]);
         console.log(' LP: ', web3.utils.fromWei(await pair.balanceOf.call(accounts[3])));
@@ -580,7 +580,7 @@ contract('Test for USDT', (accounts) => {
 
         console.log('remove');
         await router.removeLiquidity(weth.address, testCoinU.address,
-            '10000000000', (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
+            '10000000000', '0','0',accounts[3], (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
         console.log(' tick', (await pair.currentTick.call()).toString());
 
         res = await pair.getDeep.call( web3.utils.toBN('230161'));
@@ -627,7 +627,7 @@ contract('Test for USDT 2', (accounts) => {
         }
         await testCoinU.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
         await testCoinU.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
-        await router.addLiquidityETH(testCoinU.address, '2000000', '0','0',
+        await router.addLiquidityETH(testCoinU.address, '2000000', '0','0', accounts[3],
             (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
         const info1 = await router.getPairInfo.call(testCoinU.address, weth.address);
         const pair = await LimitswapPair.at(info1[2]);
@@ -676,7 +676,8 @@ contract('Test for USDT 2', (accounts) => {
 
         console.log('remove');
         await router.removeLiquidity(weth.address, testCoinU.address,
-            await pair.balanceOf.call(accounts[3]), (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
+            await pair.balanceOf.call(accounts[3]), '0','0',accounts[3],
+             (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
         console.log(' tick', (await pair.currentTick.call()).toString());
 
         console.log('cancel');
