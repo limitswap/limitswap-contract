@@ -317,7 +317,7 @@ contract LimitswapPair is LimitSwapERC20{
         tick = TickMath.getTickAtSqrtRatio(currentSqrtPriceX96);
     }
 
-    event Swap(address indexed from, uint128 token0In, uint128 token1In, uint128 token0Out, uint128 token1Out);
+    event Swap(address indexed from, uint128 token0In, uint128 token1In, uint128 token0Out, uint128 token1Out, uint160 newPriceX96);
     event PutLimit(address indexed from, int24 tick, uint128 buyShare, uint128 sellShare, uint128 token0In, uint128 token1In);
     event CancelLimit(address indexed from, int24 tick, uint128 buyShare, uint128 sellShare, uint128 token0Out, uint128 token1Out);
 
@@ -459,7 +459,8 @@ contract LimitswapPair is LimitSwapERC20{
                     zeroForToken1?(originAmount-amount).toUint128():0,
                     zeroForToken1?0:(originAmount-amount).toUint128(),
                     (token0Out-fee0).toUint128(),
-                    (token1Out-fee1).toUint128()
+                    (token1Out-fee1).toUint128(),
+                    currentSqrtPriceX96
                     );
         }
         //produce log
@@ -581,7 +582,8 @@ contract LimitswapPair is LimitSwapERC20{
             zeroForToken0?0:amountIn.toUint128(),
             zeroForToken0?amountIn.toUint128():0,
             (token0Out-fee0).toUint128(),
-            (token1Out-fee1).toUint128()
+            (token1Out-fee1).toUint128(),
+            currentSqrtPriceX96
             );
         amountOut = fee0 > 0 ? amountOut - fee0 : amountOut - fee1;
         //update balance tracers
