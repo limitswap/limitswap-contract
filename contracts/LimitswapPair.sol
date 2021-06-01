@@ -209,8 +209,8 @@ contract LimitswapPair is LimitSwapERC20{
         return FullMath.mulDivRoundingUp(liquidity, currentSqrtPriceX96, 1<<96);
     }
 
-    event Mint(address indexed miner, uint256 amount0In, uint256 sqrtPriceX96, address to);
-    event Burn(address indexed miner, uint256 amount0In, uint256 sqrtPriceX96, address to);
+    event Mint(address indexed miner, uint256 amount0In, uint256 sqrtPriceX96, address to, uint256 liquidity);
+    event Burn(address indexed miner, uint256 amount0In, uint256 sqrtPriceX96, address to, uint256 liquidity);
 
     function getTotalLimit () public view returns(uint256 totalLimit0, uint256 totalLimit1) {
         totalLimit0 = totalLimit >> 128;
@@ -250,7 +250,7 @@ contract LimitswapPair is LimitSwapERC20{
         }
         _mint(to, share);
         //emit event
-        emit Mint(msg.sender, amount0In, currentSqrtPriceX96, to);
+        emit Mint(msg.sender, amount0In, currentSqrtPriceX96, to, liquidity);
         //update balance tracers
         lastBalance0 = balance0();
         lastBalance1 = balance1();
@@ -271,7 +271,7 @@ contract LimitswapPair is LimitSwapERC20{
         TransferHelper.safeTransfer(token1, to, Math.min(amount1, balance1()));
         _burn(address(this), share);
         //update liquidity
-        emit Burn(msg.sender, amount0, currentSqrtPriceX96, to);
+        emit Burn(msg.sender, amount0, currentSqrtPriceX96, to, liquidity);
         //update balance tracers
         lastBalance0 = balance0();
         lastBalance1 = balance1();
