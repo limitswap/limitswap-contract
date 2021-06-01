@@ -124,7 +124,7 @@ contract LimitswapMine is Ownable {
 
     // View function to see pending LimitSwap Tokens on frontend.
     function pendingAmount(uint256 _pid, address _user)
-        external
+        public
         view
         returns (uint256 _pending)
     {
@@ -145,6 +145,16 @@ contract LimitswapMine is Ownable {
         _pending = user.amount.mul(accMinedPerShare).div(1e12).sub(user.rewardDebt);
         if (maxSupply > 0){
             if(limitswapToken.totalSupply().add(_pending) > maxSupply) _pending = limitswapToken.totalSupply().sub(maxSupply);
+        }
+    }
+
+    function pendingAllAmount(address _user)
+        public
+        view
+        returns (uint256 _pending)
+    {
+        for (uint256 pid = 0; pid < poolInfo.length; ++pid){
+            _pending += pendingAmount(pid, _user);
         }
     }
 
