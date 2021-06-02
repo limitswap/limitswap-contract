@@ -58,6 +58,21 @@
 					},
 					{
 						"internalType": "uint256",
+						"name": "amountAMin",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountBMin",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
 						"name": "deadline",
 						"type": "uint256"
 					}
@@ -94,6 +109,21 @@
 						"internalType": "uint256",
 						"name": "amountTokenIn",
 						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountTokenMin",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountETHMin",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
 					},
 					{
 						"internalType": "uint256",
@@ -460,6 +490,21 @@
 					},
 					{
 						"internalType": "uint256",
+						"name": "amountAMin",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountBMin",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
 						"name": "deadline",
 						"type": "uint256"
 					}
@@ -638,11 +683,11 @@
 	},
 	"sources": {
 		"LimitswapRouter.sol": {
-			"keccak256": "0x299a58b4e2c9e89bbdc54480dc32f5e67886998d2b2f7a671e8b22c0d16eef55",
+			"keccak256": "0xa003f31cc9bad1c608cb2d3f5773bf43c77962ce5b4d10aa9ee782d0e9bc3387",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://280187cdf74eefc7034016c5d08386de31033df32dce8c77afe8bb2c83321049",
-				"dweb:/ipfs/QmaLG79Q5iNb7JkFQ9fNxEktexMXKhi1WgXQJc5hFh1LTG"
+				"bzz-raw://8398bd226195957c80c61311cbc1f26ca5b4fa3ce2c0e6363206344f9ff2a786",
+				"dweb:/ipfs/QmPdPFveyMQHw7zPQLagqShMyEXmTA2BbmE2sF9C9qFae8"
 			]
 		},
 		"interfaces/IERC20.sol": {
