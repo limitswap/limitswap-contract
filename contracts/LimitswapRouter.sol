@@ -118,7 +118,7 @@ contract LimitswapRouter {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    ) external payable ensure(deadline) returns (uint256 amountA, uint256 amountB) {
+    ) external ensure(deadline) returns (uint256 amountA, uint256 amountB) {
         (tokenA, tokenB) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         address pair = ILimitswapFactory(factory).getPair(tokenA, tokenB);
         TransferHelper.safeTransferFrom(pair, msg.sender, pair, share);
@@ -191,7 +191,6 @@ contract LimitswapRouter {
 
     function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
         external
-        payable
         ensure(deadline)
         returns (uint256 amountOut)
     {

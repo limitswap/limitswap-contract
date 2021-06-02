@@ -6,6 +6,11 @@
 	"output": {
 		"abi": [
 			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
 				"anonymous": false,
 				"inputs": [
 					{
@@ -277,7 +282,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"test/testCoin.sol": "TestCoin"
+			"test/testCoin.sol": "testCoinU"
 		},
 		"evmVersion": "istanbul",
 		"libraries": {},
