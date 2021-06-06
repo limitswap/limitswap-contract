@@ -71,14 +71,20 @@ contract LimitswapTradeCore is LimitswapStorage{
     function tradeToTick (StepState memory stepState)
          internal view returns(bool success, uint256 amountOut, uint256 curveDeep)  {
         uint160 nextSqrtPriceX96 = TickMath.getSqrtRatioAtTick(stepState.nextTick); //to save gas
-        //buyside = 1 -> curveDeep in Y
-        curveDeep = stepState.buyside?SqrtPriceMath.getAmount1Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), true):SqrtPriceMath.getAmount0Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), true);
-        if (stepState.amountIn > stepState.limitDeepPriced + curveDeep) {
-            stepState.amountIn = stepState.amountIn - (stepState.limitDeepPriced + curveDeep);
-            //buyside = 1 -> curveOut in X, limitDeep in X
-            uint256 curveOut = stepState.buyside?SqrtPriceMath.getAmount0Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false):SqrtPriceMath.getAmount1Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false);
-            amountOut = curveOut + stepState.limitDeep;
+        if (stepState.amountIn < stepState.limitDeepPriced) return (false, 0, 0);
+        uint160 estSqrtPriceX96 = SqrtPriceMath.getNextSqrtPriceFromInput(stepState.sqrtPriceX96, liquidity.toUint128(),
+             stepState.amountIn - stepState.limitDeepPriced, !stepState.buyside);
+        if ((stepState.buyside && estSqrtPriceX96 >= nextSqrtPriceX96) || (!stepState.buyside && estSqrtPriceX96 <= nextSqrtPriceX96)) {
             success = true;
+            //buyside = 1 -> curveDeep in Y
+            curveDeep = stepState.buyside ?
+                SqrtPriceMath.getAmount1Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false):
+                SqrtPriceMath.getAmount0Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false);
+            //buyside = 1 -> curveOut in X, limitDeep in X
+            uint256 curveOut = stepState.buyside ?
+                SqrtPriceMath.getAmount0Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false):
+                SqrtPriceMath.getAmount1Delta(stepState.sqrtPriceX96, nextSqrtPriceX96, liquidity.toUint128(), false);
+            amountOut = curveOut + stepState.limitDeep;
         }
     }
 
@@ -90,9 +96,9 @@ contract LimitswapTradeCore is LimitswapStorage{
         if (finderState.stopTick != 8388607 && finderState.stopTick != -8388607) {
             if ((finderState.buyside && finderState.curTick > finderState.stopTick) || (!finderState.buyside && finderState.curTick < finderState.stopTick)) {
                 finderState.sqrtPriceX96 = TickMath.getSqrtRatioAtTick(finderState.stopTick);
-                finderState.amountIn -= finderState.buyside?SqrtPriceMath.getAmount1Delta(sqrtPriceX96, finderState.sqrtPriceX96,
-             liquidity.toUint128(), true):SqrtPriceMath.getAmount0Delta(sqrtPriceX96, finderState.sqrtPriceX96,
-              liquidity.toUint128(), true);
+                finderState.amountIn -= finderState.buyside ?
+                    SqrtPriceMath.getAmount1Delta(sqrtPriceX96, finderState.sqrtPriceX96, liquidity.toUint128(), false):
+                    SqrtPriceMath.getAmount0Delta(sqrtPriceX96, finderState.sqrtPriceX96, liquidity.toUint128(), false);
                 finderState.curTick = finderState.stopTick;
             } else {
                 finderState.amountIn = 0;
@@ -100,9 +106,9 @@ contract LimitswapTradeCore is LimitswapStorage{
         } else {
             finderState.amountIn = 0;
         }
-        finderState.amountOut += finderState.buyside?SqrtPriceMath.getAmount0Delta(sqrtPriceX96, finderState.sqrtPriceX96,
-             liquidity.toUint128(), false):SqrtPriceMath.getAmount1Delta(sqrtPriceX96, finderState.sqrtPriceX96,
-              liquidity.toUint128(), false);
+        finderState.amountOut += finderState.buyside    ?
+            SqrtPriceMath.getAmount0Delta(sqrtPriceX96, finderState.sqrtPriceX96, liquidity.toUint128(), false) :
+            SqrtPriceMath.getAmount1Delta(sqrtPriceX96, finderState.sqrtPriceX96, liquidity.toUint128(), false);
         return finderState;
     }
 
@@ -262,8 +268,6 @@ contract LimitswapTradeCore is LimitswapStorage{
                 return tradeInWord(finderState);
             } else {
                 finderState = tradeAllRemainingByCurve(finderState);
-                finderState.amountIn = 0;
-                finderState.curTick = TickMath.getTickAtSqrtRatio(finderState.sqrtPriceX96);
                 return (finderState, Tick[nextTick]);
             }
         }
@@ -370,7 +374,7 @@ contract LimitswapTradeCore is LimitswapStorage{
             } else {
                 //still stuck at [fromTick, fromTick+1)
                 finderState = tradeAllRemainingByCurve(finderState);
-                finderState.amountIn = 0;
+                //finderState.amountOut = 1 ether;
                 return (finderState, tickDeep(0,0,0,0), false);
             }
         }

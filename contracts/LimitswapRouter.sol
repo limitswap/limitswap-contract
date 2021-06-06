@@ -6,6 +6,7 @@ import './interfaces/ILimitswapFactory.sol';
 import './interfaces/ILimitswapPair.sol';
 import './interfaces/IERC20.sol';
 import './libraries/BitMath.sol';
+import './libraries/FullMath.sol';
 import './libraries/TransferHelper.sol';
 import './libraries/StructuredLinkedList.sol';
 
@@ -215,19 +216,19 @@ contract LimitswapRouter {
         }
     }
 
-    function getAmountOut(uint amountIn, address[] calldata path) public view returns (uint amountOut, uint amountOutNoPriceImpact) {
+    function getAmountOut(uint amountIn, address[] calldata path) public view returns (uint256 amountOut, uint256 impactE9) {
         require(path.length >= 2, 'LimitswapRouter: INVALID_PATH');
         amountOut = amountIn;
-        amountOutNoPriceImpact = amountIn;
+        uint256 sqrtPriceX96;
+        uint256 priceWithoutImpact = 1<<96;
+        uint256 priceWithImpact    = 1<<96;
         for (uint i; i < path.length - 1; i++) {
             address pair = ILimitswapFactory(factory).getPair(path[i], path[i+1]);
-            (amountOut,,) = ILimitswapPair(pair).estOutput(amountOut, path[i] < path[i+1] ? false : true);
-            if (path[i] < path[i+1]){//input is token0
-                amountOutNoPriceImpact = ILimitswapPair(pair).amount0ToAmount1(amountOutNoPriceImpact, ILimitswapPair(pair).currentSqrtPriceX96());
-            } else {//input is token1
-                amountOutNoPriceImpact = ILimitswapPair(pair).amount1ToAmount0(amountOutNoPriceImpact, ILimitswapPair(pair).currentSqrtPriceX96());
-            }
+            (amountOut,,sqrtPriceX96) = ILimitswapPair(pair).estOutput(amountOut, path[i] < path[i+1] ? false : true);
+            priceWithImpact = FullMath.mulDiv(priceWithImpact, sqrtPriceX96, 1<<96);
+            priceWithoutImpact = FullMath.mulDiv(priceWithImpact, ILimitswapPair(pair).currentSqrtPriceX96(), 1<<96);
         }
+        impactE9 = FullMath.mulDiv(priceWithImpact, 10**9, priceWithoutImpact);
     }
 
     address public sender;
@@ -249,7 +250,7 @@ contract LimitswapRouter {
     }
 
 
-    function putLimitOrder (address pair, address tokenIn, uint256 amountIn, int24 tick) external returns(uint256 share) {
+    function putLimitOrder (address pair, address tokenIn, uint256 amountIn, int24 tick) public returns(uint256 share) {
         address tokenA = ILimitswapPair(pair).token0();
         address tokenB = ILimitswapPair(pair).token1();
         require(tokenA == tokenIn || tokenB == tokenIn, 'TOKENERROR');
@@ -262,7 +263,10 @@ contract LimitswapRouter {
         sender = msg.sender;
         share = ILimitswapPair(pair).putLimitOrder(tick, amountIn, isSellShare);
         delete sender;
-        limitOrders[msg.sender].pushFront(packRecord(pair, tick, isSellShare));
+        uint256 record = packRecord(pair, tick, isSellShare);
+        if (!limitOrders[msg.sender].nodeExists(record)) {
+            limitOrders[msg.sender].pushFront(record);
+        }
         transferExtraTokens(tokenA, tokenB, balanceA, balanceB, msg.sender);
     }
 
@@ -281,8 +285,9 @@ contract LimitswapRouter {
         sender = msg.sender;
         (token0Out, token1Out) = ILimitswapPair(pair).cancelLimitOrder(tick, share, isSellShare);
         delete sender;
-        if(share == totalUserShare){
-            limitOrders[msg.sender].remove(packRecord(pair, tick, isSellShare));
+        uint256 record = packRecord(pair, tick, isSellShare);
+        if(share == totalUserShare && limitOrders[msg.sender].nodeExists(record)){
+            limitOrders[msg.sender].remove(record);
         }
         transferExtraTokens(tokenA, tokenB, balanceA, balanceB, msg.sender);
     }
@@ -303,7 +308,7 @@ contract LimitswapRouter {
         transferExtraTokens(tokenA, tokenB, balanceA, balanceB, msg.sender);
     }
 
-    function getLimitOrdersRaw(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records){
+    function getLimitOrdersRaw(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records, uint256 totalCount){
         records = new uint[](limit);
         uint256 cursor;
         bool toContinue = true;
@@ -314,11 +319,12 @@ contract LimitswapRouter {
             (toContinue, cursor) = limitOrders[user].getNextNode(cursor);
             if(toContinue) records[i] = cursor;
         }
+        totalCount = limitOrders[user].sizeOf();
     }
 //update 2021.5.14: positions(token0Out+token1Out) -> token0Out, token1Out
     function getLimitOrders(address user, uint256 limit, uint256 offset) public view
-        returns(uint256[] memory records, uint256[] memory token0Out, uint256[] memory token1Out){
-        records = getLimitOrdersRaw(user, limit, offset);
+        returns(uint256[] memory records, uint256[] memory token0Out, uint256[] memory token1Out, uint256 totalCount){
+        (records, totalCount) = getLimitOrdersRaw(user, limit, offset);
         token0Out = new uint256[](limit);
         token1Out = new uint256[](limit);
         uint256 position;

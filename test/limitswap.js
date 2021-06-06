@@ -9,6 +9,7 @@ const FlashBorrower = artifacts.require("flashBorrower");
 const LimitswapMine = artifacts.require("LimitswapMine");
 const LimitswapToken = artifacts.require("LimitswapToken");
 const TestCoinU = artifacts.require("testCoinU");
+const LibTest = artifacts.require("libTest");
 
 
 contract('LimitswapPair', (accounts) => {
@@ -627,64 +628,22 @@ contract('Test for USDT 2', (accounts) => {
         }
         await testCoinU.mint(accounts[3], web3.utils.toBN(web3.utils.toWei('2000')), {from: accounts[3]});
         await testCoinU.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
-        await router.addLiquidityETH(testCoinU.address, '2000000', '0','0', accounts[3],
+        await router.addLiquidityETH(testCoinU.address, '60000', '0','0', accounts[3],
             (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('0.01')});
         const info1 = await router.getPairInfo.call(testCoinU.address, weth.address);
         const pair = await LimitswapPair.at(info1[2]);
         console.log(' LP: ', web3.utils.fromWei(await pair.balanceOf.call(accounts[3])));
         await pair.approve(router.address, web3.utils.toBN(web3.utils.toWei('654474745')), {from: accounts[3]});
         console.log(' tick', (await pair.currentTick.call()).toString());
-
-        await router.putLimitOrderETH(info1[2],web3.utils.toBN('223288'),{from: accounts[3], value: web3.utils.toWei('0.003')});
-        res = await pair.getDeep.call( web3.utils.toBN('223288'));
-        console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-        console.log(' tick', (await pair.currentTick.call()).toString());
-        var sellShare = await pair.sellShare.call(accounts[3],web3.utils.toBN('223288'));
-        res = await pair.getLimitTokens.call( web3.utils.toBN('223288'), accounts[3], sellShare, true);
-        console.log(' accounts[3] 223288 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-        var buyShare = await pair.buyShare.call(accounts[3],web3.utils.toBN('223288'));
-        res = await pair.getLimitTokens.call( web3.utils.toBN('223288'), accounts[3], buyShare, false);
-        console.log(' accounts[3] 223288 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-        res = await router.cancelLimitOrder.call(info1[2], web3.utils.toBN('223288'), buyShare, false, {from:accounts[3]});
-        console.log(' call cancel:', web3.utils.fromWei(res[0]), web3.utils.fromWei(res[1]));
-
-        console.log('swap');
-        console.log(web3.utils.fromWei((await router.getAmountOut.call('500000',[testCoinU.address, weth.address]))[0]));
-        await router.swapExactTokensForETH('500000',
-                '0', [testCoinU.address, weth.address],accounts[3],
-                (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
-        res = await pair.getDeep.call( web3.utils.toBN('223288'));
-        console.log(await pair.isExploited.call(web3.utils.toBN('223288'), 1));
-        console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-        console.log(' tick', (await pair.currentTick.call()).toString());
-        res = await pair.getLimitTokens.call( web3.utils.toBN('223288'), accounts[3], buyShare, false);
-        console.log(' accounts[3] 223288 ', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-
-        console.log('put');
-        await router.putLimitOrder(info1[2], testCoinU.address, '500000', '223239', {from:accounts[3]});
-        console.log(' tick', (await pair.currentTick.call()).toString());
-
-        console.log('swap');
-        //console.log(web3.utils.fromWei((await router.getAmountOut.call(web3.utils.toBN(web3.utils.toWei('2')),[testCoinA.address, weth.address]))[0]));
-        await router.swapExactETHForTokens(
-                '0', [weth.address, testCoinU.address],accounts[3],
-                (Date.now()+50000).toString().substr(0,10),
-                {from: accounts[3], value:web3.utils.toWei('0.003')});
-                res = await pair.getDeep.call( web3.utils.toBN('-80168'));
-                console.log(' deep:', web3.utils.fromWei(res[0]).toString(), ' A ', web3.utils.fromWei(res[1]).toString(), ' B ');
-        console.log(' tick', (await pair.currentTick.call()).toString());
-
-        console.log('remove');
-        await router.removeLiquidity(weth.address, testCoinU.address,
-            await pair.balanceOf.call(accounts[3]), '0','0',accounts[3],
-             (Date.now()+50000).toString().substr(0,10),{from: accounts[3]});
-        console.log(' tick', (await pair.currentTick.call()).toString());
-
-        console.log('cancel');
-        console.log(' liquidity', (await pair.liquidity.call()).toString());
-        console.log(' currentSqrtPriceX96', (await pair.currentSqrtPriceX96.call()).toString());
-        res = await router.cancelLimitOrder.call(info1[2], web3.utils.toBN('223288'), buyShare, false, {from:accounts[3]});
-        console.log(' call cancel:', web3.utils.fromWei(res[0]), web3.utils.fromWei(res[1]));
-
+        console.log(' price', (await pair.currentSqrtPriceX96.call()).toString());
+        const libTest = await LibTest.deployed();
+        for (let i = 1 ; i<=5 ; i++){
+            var info = (await pair.estOutput.call(i.toString(), false));
+            console.log(' expect output ', i ,web3.utils.fromWei(info[0]),
+            web3.utils.fromWei(info[0].div(web3.utils.toBN(i))),
+            info[2].toString(),
+            (await libTest.getTickAtSqrtRatio.call(info[2])).toString()
+            );
+        }
         });
 });
