@@ -216,19 +216,18 @@ contract LimitswapRouter {
         }
     }
 
-    function getAmountOut(uint amountIn, address[] calldata path) public view returns (uint256 amountOut, uint256 impactE9) {
+    function getAmountOut(uint amountIn, address[] calldata path) public view returns (uint256 amountOut, uint256 sprtPriceX96WithImpact, uint256 sprtPriceX96WithoutImpact) {
         require(path.length >= 2, 'LimitswapRouter: INVALID_PATH');
         amountOut = amountIn;
         uint256 sqrtPriceX96;
-        uint256 priceWithoutImpact = 1<<96;
-        uint256 priceWithImpact    = 1<<96;
+        sprtPriceX96WithoutImpact = 1<<96;
+        sprtPriceX96WithImpact    = 1<<96;
         for (uint i; i < path.length - 1; i++) {
             address pair = ILimitswapFactory(factory).getPair(path[i], path[i+1]);
             (amountOut,,sqrtPriceX96) = ILimitswapPair(pair).estOutput(amountOut, path[i] < path[i+1] ? false : true);
-            priceWithImpact = FullMath.mulDiv(priceWithImpact, sqrtPriceX96, 1<<96);
-            priceWithoutImpact = FullMath.mulDiv(priceWithImpact, ILimitswapPair(pair).currentSqrtPriceX96(), 1<<96);
+            sprtPriceX96WithImpact = FullMath.mulDiv(sprtPriceX96WithImpact, sqrtPriceX96, 1<<96);
+            sprtPriceX96WithoutImpact = FullMath.mulDiv(sprtPriceX96WithoutImpact, ILimitswapPair(pair).currentSqrtPriceX96(), 1<<96);
         }
-        impactE9 = FullMath.mulDiv(priceWithImpact, 10**9, priceWithoutImpact);
     }
 
     address public sender;
