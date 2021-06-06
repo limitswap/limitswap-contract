@@ -394,11 +394,11 @@
 			]
 		},
 		"LimitswapTradeCore.sol": {
-			"keccak256": "0x75671fd29ba64f8f2025f19aead4fc858ac3ce3ff584147b67203533a60ab6b1",
+			"keccak256": "0x1e6aac14f6e9de5cddd931a58e22bdd884b2883b82d1fa59ea0ca09112b22bbb",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://290950c30b907ffff9ad050b2962882df6af195af476e99e3da03f31b5a8d18d",
-				"dweb:/ipfs/QmRQbrNAwRNgQPqL6XBsMaeiGS9v7T16QkyP7u1HqcQqRY"
+				"bzz-raw://746008135ca5f608d20a3390b78cb4e24f2f8454d4c85251abcc53aa654230fa",
+				"dweb:/ipfs/QmQWUM2fGgTk83gXC2tnFrEtakgiHcxDgbfFGJRcaS1AvE"
 			]
 		},
 		"interfaces/IERC20.sol": {

@@ -299,7 +299,7 @@
 
   amounts：每一步的输出
 
-  function **getAmountOut**(uint amountIn, address[] calldata path) public view returns (uint amountOut, uint amountOutNoPriceImpact);
+  function **getAmountOut**(uint amountIn, address[] calldata path) public view returns (uint amountOut, uint256 sprtPriceX96WithImpact, uint256 sprtPriceX96WithoutImpact);
 
   *预估产出*
 
@@ -313,12 +313,14 @@
 
   amountOut：输出
 
-  amountOutNoPriceImpact：简单通过每个pair的当前价格换算的数值
+  sprtPriceX96WithImpact: 冲击后的价格算术平方根乘以2^96
+
+  sprtPriceX96WithoutImpact: 冲击前的价格算术平方根乘以2^96
 
 
 ## on-chain storage
 
-- function **getLimitOrdersRaw**(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records);
+- function **getLimitOrdersRaw**(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records, uint256 totalCount);
 
   *返回给定用户不为零的限价订单*
 
@@ -346,7 +348,9 @@
   }
   ```
 
-- function **getLimitOrders**(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records, uint256[] memory token0Out, uint256[] memory token1Out);
+  totalCount: 记录总条数 
+
+- function **getLimitOrders**(address user, uint256 limit, uint256 offset) public view returns(uint256[] memory records, uint256[] memory token0Out, uint256[] memory token1Out, uint256 totalCount);
 
   *返回给定用户不为零的限价订单及对应刻度最大可以拿到的token数量*
 
@@ -365,6 +369,8 @@
   token0Out: 可退出的token0数量
 
   token1Out: 可退出的token1数量
+
+  totalCount: 记录总条数 
 
 - function **getLPBalance** (address user, uint256 scanLimit, uint256 scanOffset, uint256 resLimit) public view returns(uint256[] memory balances);
 
@@ -438,6 +444,12 @@ LIMITSWAPTOKEN:0xA8c5F269b8E54A176AB68a10582bdc180fE1636F
 LIMITSWAPMINE:0xfA4E0f0d3247eFDd06C33d35303D23D1B79b9985
   -pool 0:tokenA
   -pool 1:tokenA-ETH pair
+
+### test10
+
+LIMITSWAPFACTORY: 0xa25C8DD4e86D52BD01ED61aF379c8E1aD17E4992
+
+LIMITSWAPROUTER:0xD867fE2643F40B5360f25DDbb0bCF7DA4DA65C6b
 
 
 

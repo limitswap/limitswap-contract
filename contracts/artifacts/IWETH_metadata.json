@@ -78,11 +78,11 @@
 	},
 	"sources": {
 		"LimitswapRouter.sol": {
-			"keccak256": "0xa003f31cc9bad1c608cb2d3f5773bf43c77962ce5b4d10aa9ee782d0e9bc3387",
+			"keccak256": "0x37cdff12e50353979138c8a8a3d05e466b61a280cf674b75fcc79578431e225c",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://8398bd226195957c80c61311cbc1f26ca5b4fa3ce2c0e6363206344f9ff2a786",
-				"dweb:/ipfs/QmPdPFveyMQHw7zPQLagqShMyEXmTA2BbmE2sF9C9qFae8"
+				"bzz-raw://eca6bd05f69364385959096845b89af1550cf9851dab1e6f788e56c8fc70e103",
+				"dweb:/ipfs/QmZR8fXbJso4ReoiYPdHWZFQ4YcLL2Pt2ka9ghQjAoVYKc"
 			]
 		},
 		"interfaces/IERC20.sol": {
@@ -115,6 +115,14 @@
 			"urls": [
 				"bzz-raw://4727f710b04fc887155c597e7dcbb04fa69d5c6dfc3be6ce3ebbb0af4e92564c",
 				"dweb:/ipfs/QmVxCP5cmjtr9HP5nR8LcqQ5U5Ltw4VC6fs86CwM4T1Nkx"
+			]
+		},
+		"libraries/FullMath.sol": {
+			"keccak256": "0x761305aed7883edfee777dbec1e5d9250a07842e4e3103e7db4a1e70ef8bbc80",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://bb30837260f598af1853651040f4682ac834082dc9a12bd4675487dd36637dcc",
+				"dweb:/ipfs/QmbbJYJFtpfHns2fRVSPAtdkxWHpGBk7nDWrQaBXXQQrJK"
 			]
 		},
 		"libraries/SafeMath.sol": {
