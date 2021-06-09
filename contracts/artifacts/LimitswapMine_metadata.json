@@ -242,50 +242,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "_pid",
-						"type": "uint256"
-					}
-				],
-				"name": "getPoolInfo",
-				"outputs": [
-					{
-						"internalType": "string",
-						"name": "tokenName",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "tokenSymbol",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "tokenDecimals",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "tokenAddress",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "outputPerBlock",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "depositedTokenAmount",
-						"type": "uint256"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "limitswapToken",
 				"outputs": [
@@ -325,6 +281,25 @@
 					{
 						"internalType": "uint256",
 						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_pid",
+						"type": "uint256"
+					}
+				],
+				"name": "minedPerBlockByPool",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "outputPerBlock",
 						"type": "uint256"
 					}
 				],
@@ -610,11 +585,11 @@
 	},
 	"sources": {
 		"LimitswapMine.sol": {
-			"keccak256": "0x4d8b8152b42cbd2d563c7c90a56e54fd238b62aa3b6287632907acffc724a487",
+			"keccak256": "0x528ed21e789e819a05604a4f7d22723622852e03995467cbf470a7f0d169c1a6",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://e620c15b036063c7db06036bec10a2bd94fd8d8bd09b793ebf5ebcde15585d9e",
-				"dweb:/ipfs/QmXeYH5pf88S1u2cJ2Gu96vNHUohriM1vVM3pMUvGCu2Rz"
+				"bzz-raw://2c70a073892b027b7830291f345674eac4db721f4f884acc87bec372c918b9c2",
+				"dweb:/ipfs/Qmf7sYpRSQkhso9MzEJSp4vqDemubevengNmoj3Hv7aMCP"
 			]
 		},
 		"LimitswapToken.sol": {
