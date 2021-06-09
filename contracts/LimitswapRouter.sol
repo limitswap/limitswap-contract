@@ -225,8 +225,14 @@ contract LimitswapRouter {
         for (uint i; i < path.length - 1; i++) {
             address pair = ILimitswapFactory(factory).getPair(path[i], path[i+1]);
             (amountOut,,sqrtPriceX96) = ILimitswapPair(pair).estOutput(amountOut, path[i] < path[i+1] ? false : true);
-            sprtPriceX96WithImpact = FullMath.mulDiv(sprtPriceX96WithImpact, sqrtPriceX96, 1<<96);
-            sprtPriceX96WithoutImpact = FullMath.mulDiv(sprtPriceX96WithoutImpact, ILimitswapPair(pair).currentSqrtPriceX96(), 1<<96);
+            sprtPriceX96WithImpact = FullMath.mulDiv(
+                sprtPriceX96WithImpact,
+                path[i] < path[i + 1] ? sqrtPriceX96 : uint256(1<<192).div(sqrtPriceX96),
+                1<<96);
+            sprtPriceX96WithoutImpact = FullMath.mulDiv(
+                sprtPriceX96WithoutImpact,
+                path[i] < path[i + 1] ? ILimitswapPair(pair).currentSqrtPriceX96() : uint256(1<<192).div(ILimitswapPair(pair).currentSqrtPriceX96()),
+                1<<96);
         }
     }
 

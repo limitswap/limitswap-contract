@@ -317,8 +317,9 @@ contract('LimitswapRouter', (accounts) => {
         const weth = await WETH.deployed();
         var balance3B0 = await testCoinB.balanceOf.call(accounts[3]);
         var estOutput = await router.getAmountOut.call(web3.utils.toWei('1'), [weth.address, testCoinA.address, testCoinB.address]);
-        console.log(' expect B with price impact:', (web3.utils.fromWei(estOutput[0])).toString());
-        console.log(' expect B w/o  price impact:', (web3.utils.fromWei(estOutput[1])).toString());
+        console.log(' expect B:', (web3.utils.fromWei(estOutput[0])).toString());
+        console.log(' price with impact:', ((estOutput[1])).toString());
+        console.log(' price w/o  impact:', ((estOutput[2])).toString());
         await router.swapExactETHForTokens(0, [weth.address, testCoinA.address, testCoinB.address], accounts[3],
             (Date.now()+50000).toString().substr(0,10), {from: accounts[3], value: web3.utils.toWei('1')});
         var balance3B1 = await testCoinB.balanceOf.call(accounts[3]);

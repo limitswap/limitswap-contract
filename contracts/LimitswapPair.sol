@@ -156,7 +156,7 @@ contract LimitswapPair is LimitSwapERC20{
     }
 
     function symbol() public view override returns (string memory) {
-        return name();
+        return string(abi.encodePacked('LimitSwap: ',IERC20(token0).symbol(),'/',IERC20(token1).symbol()));
     }
 
     function amount0ToAmount1(uint256 amount0, uint160 sqrtPriceX96) public pure returns (uint256 amount1){

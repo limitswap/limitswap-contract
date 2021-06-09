@@ -78,6 +78,18 @@ contract LimitswapMine is Ownable {
         return poolInfo.length;
     }
 
+    function getPoolInfo(uint256 _pid) external view returns(
+        string memory tokenName, string memory tokenSymbol, uint256 tokenDecimals,
+        address tokenAddress, uint256 outputPerBlock, uint256 depositedTokenAmount) {
+        PoolInfo memory pool = poolInfo[_pid];
+        tokenName = pool.depositToken.name();
+        tokenSymbol = pool.depositToken.symbol();
+        tokenDecimals = pool.depositToken.decimals();
+        tokenAddress = address(pool.depositToken);
+        if (totalAllocPoint != 0) outputPerBlock = minedPerBlock.mul(pool.allocPoint).div(totalAllocPoint);
+        depositedTokenAmount = pool.depositToken.balanceOf(address(this));
+    }
+
     // Add a new token to the pool. Can only be called by the owner.
     // XXX DO NOT add the same token more than once. Rewards will be messed up if you do.
     function add(

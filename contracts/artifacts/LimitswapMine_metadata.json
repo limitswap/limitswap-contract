@@ -242,6 +242,50 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_pid",
+						"type": "uint256"
+					}
+				],
+				"name": "getPoolInfo",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "tokenName",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "tokenSymbol",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "tokenDecimals",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "tokenAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "outputPerBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "depositedTokenAmount",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "limitswapToken",
 				"outputs": [
@@ -566,11 +610,11 @@
 	},
 	"sources": {
 		"LimitswapMine.sol": {
-			"keccak256": "0x6f2d5e8bd5341a380baad71e4e85fdd94c2b08c98a87ad304cfc76deabfa52a6",
+			"keccak256": "0x4d8b8152b42cbd2d563c7c90a56e54fd238b62aa3b6287632907acffc724a487",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://e610efe72c37b855c1c91da80deb2064a2bc20efae0194514264183f9d4288dd",
-				"dweb:/ipfs/QmZaBANyCKjgD7xYrffe98MMVrbtyFKHtWaUVcpyC4jQQM"
+				"bzz-raw://e620c15b036063c7db06036bec10a2bd94fd8d8bd09b793ebf5ebcde15585d9e",
+				"dweb:/ipfs/QmXeYH5pf88S1u2cJ2Gu96vNHUohriM1vVM3pMUvGCu2Rz"
 			]
 		},
 		"LimitswapToken.sol": {

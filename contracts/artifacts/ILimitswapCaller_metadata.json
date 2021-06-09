@@ -47,11 +47,11 @@
 	},
 	"sources": {
 		"LimitswapPair.sol": {
-			"keccak256": "0x2700262743c427fde6790f22bfaf2842514a0a91391b1471bee23c5b958d2d63",
+			"keccak256": "0x60a7a5432bd6596720ef2a89e0be4c320051375cdcf04140d28a8d3400770dde",
 			"license": "GPL-2.0",
 			"urls": [
-				"bzz-raw://b5d20b1e38fd62d0e4c3cb4e43e61c51eba18e054fdf10b00a4b2a2674214e15",
-				"dweb:/ipfs/Qmegd2kE8mMcrvsgFF1WiVTLNKp8nUqPXzC9Dgk4w4bRf8"
+				"bzz-raw://20ff24fba5cd4019da6ac3abb190b61f02246d3cc6095c052c4eaf216e746271",
+				"dweb:/ipfs/QmVdyygHM5cAJedtWMiVmiYNJyeBzg1QygtLpyLeU37aBS"
 			]
 		},
 		"LimitswapStorage.sol": {
